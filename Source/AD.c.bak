@@ -1,0 +1,427 @@
+/*************************************************
+Project:                GM8804C-2_ARM
+File name:              AD.c
+Description:            AD驱动相关函数
+Author:                 丛海旭
+Version:                1.0
+Date:                   2013-12-9
+Others:                 IC:CS5532
+History:
+*************************************************/
+
+#include "include.h"
+
+u8 const DFNUMBER[]={19,27,35,43,51,59,67,75,83,91};
+//各级滤波系数表
+u16 const DFTAB0[]={76,163,256,351,443,527,597,651,684,696};
+                    /*6*/
+u16 const DFTAB1[]={13,57,105,156,209,263,315,364,409,447,479,502,516,522};
+                    /*4.5*/
+u16 const DFTAB2[]={4,29,56,86,117,149,182,214,245,275,303,328,351,370,385,396,403,406};
+                    /*3.50*/
+u16 const DFTAB3[]={6,22,41,59,79,99,119,140,161,181,201,220,238,255,270,284,296,306,314,320,323,324};
+                    /*2.8*/
+u16 const DFTAB4[]={1,12,25,38,52,66,81,95,110,126,141,155,170,184,197,210,222,233,243,252,259,265,270,274,276,278,};
+                    /*2.39*/
+u16 const DFTAB5[]={1,9,19,28,38,48,59,70,81,92,103,115,126,137,147,158,
+                    168,177,186,195,203,210,217,222,227,231,234,237,238,240};
+                    /*2.06*/
+u16 const DFTAB6[]={1,8,15,23,30,38,46,54,63,71,80,88,97,105,114,122,130,138,
+                    146,153,160,167,173,179,184,189,194,198,201,204,206,207,208,208,};
+                    /*1.8*/
+u16 const DFTAB7[]={1,7,12,18,24,30,36,42,49,56,62,69,76,83,90,97,103,110,116,
+                    123,129,135,141,146,151,156,161,165,169,173,176,179,181,182,184,185,186,186};
+                    /*1.61*/
+u16 const  DFTAB8[]={2,6,10,15,20,24,29,35,40,45,51,56,62,67,73,78,84,89,
+                     95,100,105,110,115,120,125,130,134,138,142,146,149,152,
+                     155,158,160,162,164,165,166,167,168,168};
+                   /*1.45*/
+u16 const  DFTAB9[]={3,6,10,14,17,21,26,30,34,38,43,47,52,56,61,65,70,74,
+                     79,83,88,92,96,100,104,108,112,116,120,123,126,129,
+                     132,135,138,140,142,144,146,147,149,150,151,151,152,152};
+                   //1.31
+
+#define DFCOESUM  8192
+const u16* pu16DFTab[10]={DFTAB0,DFTAB1,DFTAB2,DFTAB3,DFTAB4,DFTAB5,DFTAB6,DFTAB7,DFTAB8,DFTAB9};
+
+
+//读cs5532输出
+#define ADC_DOUT_READ   GPIO_BitRead(GPIO0,0)
+//#define ADC_DOUT_CLR    GPIO_BitWrite(GPIO0,0,0)
+//#define ADC_DOUT_SET    GPIO_BitWrite(GPIO0,0,1)
+//写cs5532输入端口
+#define ADC_DIN_CLR     GPIO_BitWrite(GPIO0,1,0)
+#define ADC_DIN_SET     GPIO_BitWrite(GPIO0,1,1)
+//写cs5532时钟端口
+#define ADC_CLK_CLR     GPIO_BitWrite(GPIO0,2,0)
+#define ADC_CLK_SET     GPIO_BitWrite(GPIO0,2,1)
+
+
+//同步字符 以及同步字符 字长度
+#define  ADCOM_SYNC1        0XFF
+#define  ADCOM_SYNC0        0XFE
+#define  ADCOM_SYNC1_NUM    15
+#define  ADCOM_SYNC0_NUM    1
+
+#define ADCOM_WOFFSETR      0X01    //写偏移寄存器
+#define ADCOM_WGAINR        0X02    //写增益寄存器
+#define ADCOM_WCFGR         0X03    //写配置寄存器
+#define ADCOM_RCFGR         0X0B    //读配置寄存器
+#define ADCOM_WCANNELR      0X05    //写通道设置寄存器
+
+#define ADDAT_CFG_RESET 0x22000000  //复位
+#define ADDAT_CFG_NRM   0x02000000  //正常
+#define ADDAT_OSR_0     0x00000000  //Offset==0
+#define ADDAT_GR_1      0x01000000  //Gain  == 1
+#define ADDAT_CR_3840   0x04400440  //3840次/秒
+#define ADDAT_CR_1920   0x04C004C0  //1920次/秒
+#define ADDAT_CR_960    0x05400540  //960次/秒
+#define ADDAT_CR_480    0x05C005C0  //480次/秒
+#define ADDAT_CR_240    0x06400640  //240次/秒
+#define ADDAT_CR_120    0x00400040  //120次/秒
+#define ADDAT_CR_60     0x00C000C0  //60次/秒
+
+#define ADCOM_ADStar        0XC0
+#define ADCOM_KEEP          0X00
+
+bool gb_AdErrFlg;           //AD错误标志
+bool gb_AdOKFlg;            //AD初始化成功标志位
+bool gb_AdOflFlg;           //AD溢出标志位
+bool gb_OflFlg;             //重量溢出标志位
+bool gb_SigWtFlg;             //符号标志
+
+u32 gu32_AdQueue[92];       //AD采样队列
+u32 gu32_AdValue;           //AD转换得到的数据
+
+
+bool gb_SigAdValueFlg;           //AD转换得到的数据换成重量后的符号
+
+
+/*********************************************************************
+函数名称: void AD_SendByte(u8 outdata)
+功    能: 写入ADC一字节数据
+说    明: 底层驱动
+入口参数: outdata = 发送的数据
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+void AD_SendByte(u8 outdata)
+{
+    u8 i;
+    for (i = 0; i < 8; i++)
+    {
+        (outdata & 0x80) ? ADC_DIN_SET:ADC_DIN_CLR;
+        __nop();
+        ADC_CLK_SET;
+        __nop();
+        outdata <<= 1;
+        ADC_CLK_CLR;
+        __nop();
+    }
+}
+
+/*********************************************************************
+函数名称: u8 AD_ReceiveByte(void)
+功    能: 从ADC读出一字节数据
+说    明: 底层驱动
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+u8 AD_ReceiveByte(void)
+{
+    u8 i;
+    u8 indata = 0;
+    for (i = 0; i < 8; i++)
+    {
+        indata <<= 1;
+        if(ADC_DOUT_READ == 1)
+            indata |= 0X01;
+        ADC_CLK_SET;
+        __nop();
+        ADC_CLK_CLR;
+        __nop();
+
+    }
+    return indata;
+}
+
+/*********************************************************************
+函数名称: void AD_WriteReg(u8 u8AdCOM,u32 u32AdRegVal)
+功    能: 写ADC寄存器
+说    明: 底层驱动
+入口参数: 
+返 回 值: u8AdCOM：寄存器地址 u32AdRegVal：寄存器值
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+void AD_WriteReg(u8 u8AdCOM,u32 u32AdRegVal)
+{
+    u8 i;
+    ULDATA uADData;
+    uADData.ul=u32AdRegVal;
+    AD_SendByte(u8AdCOM);
+    for(i=0;i<4;i++){
+        AD_SendByte(uADData.uc[3-i]); //ARM 小端模式//先发送高位
+    }
+}
+
+/*********************************************************************
+函数名称: u32 AD_ReadReg(u8 u8AdCOM)
+功    能: 读ADC寄存器
+说    明: 底层驱动
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+u32 AD_ReadReg(u8 u8AdCOM)
+{
+    ULDATA u32AdRegVal;
+    u8 i;
+    AD_SendByte(u8AdCOM);
+    for (i = 0; i < 4; i++)
+        u32AdRegVal.uc[3-i] = AD_ReceiveByte();//ARM 小端模式//先接收的是高位
+    return u32AdRegVal.ul;
+}
+
+/*********************************************************************
+函数名称: void AD_SYNC(void)
+功    能: 发送同步命令
+说    明: 底层驱动
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+void AD_SYNC(void)
+{
+    u8 i;
+    for (i = 0; i < ADCOM_SYNC1_NUM; i++)
+        AD_SendByte(ADCOM_SYNC1);
+    for (i = 0; i < ADCOM_SYNC0_NUM; i++)
+        AD_SendByte(ADCOM_SYNC0);
+}
+
+/*********************************************************************
+函数名称: bool AD_Init(u8 i)
+功    能: 初始化AD
+说    明: 底层驱动
+入口参数: i:对应AD采样速度120 240 480 960 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+bool AD_Init(u8 i)
+{
+    u8 u8reInitNum=0;
+    u32 u32CfgRegVal;
+    u32 lu32_Temp;
+    
+    switch (i)
+    {
+        default:
+        case 0:
+            lu32_Temp = ADDAT_CR_120;
+            break;
+        case 1:
+            lu32_Temp = ADDAT_CR_240;
+            break;
+        case 2:
+            lu32_Temp = ADDAT_CR_480;
+            break;
+        case 3:
+            lu32_Temp = ADDAT_CR_960;
+            break;
+    }
+    
+    
+    //标准TTL输入，GPIO_IN_TRI_CMOS高阻模拟输入
+    GPIO_Config(GPIO0, (1<<0), GPIO_IN_TRI_TTL);
+    //推挽输出GPIO_OUT_PP
+    GPIO_Config(GPIO0, (1<<1), GPIO_OUT_PP);
+    //时钟 推挽输出
+    GPIO_Config(GPIO0, (1<<2), GPIO_OUT_PP);
+    
+    do{
+        //判断重新初始化次数是否已经超出，超出则AD初始化失败
+        if (u8reInitNum >= 4)
+        {
+            gb_AdErrFlg = true;
+            return false;
+        }
+        AD_SYNC();      //发同步字符初始化到命令模式
+        AD_WriteReg(ADCOM_WCFGR, ADDAT_CFG_RESET); //写复位命令
+        u8reInitNum++;  //自加 AD重初始化次数
+        u32CfgRegVal = AD_ReadReg(ADCOM_RCFGR); //读配置寄存器
+    }while(u32CfgRegVal != 0x10000000);     //已经复位成功则继续
+
+    AD_WriteReg(ADCOM_WOFFSETR, ADDAT_OSR_0);      //写偏移寄存器 偏移量为0
+    AD_WriteReg(ADCOM_WGAINR, ADDAT_GR_1);         //写增益寄存器 增益为1
+    AD_WriteReg(ADCOM_WCFGR, ADDAT_CFG_NRM);       //写配置寄存器 参考电压设置为1V~2.5V
+    //写通道设置寄存器 物理通道1 增益1 转换次数120 单极性
+    AD_WriteReg(ADCOM_WCANNELR, lu32_Temp);
+    AD_SendByte(ADCOM_ADStar);    //AD执行连续转换
+    delay(1);
+    gb_AdErrFlg = false;
+    return true;            //初始化成功
+}
+
+
+/*程序的入口是滤波的级数，而出口是指向该级数的表格的指针*/
+const u16* FilterTab(u8 dflevel)
+{
+    if (dflevel > 9)
+        dflevel = 5;
+    return (pu16DFTab[dflevel]);
+}
+
+/*********************************************************************
+函数名称: u32 Ad_Filter(u32 ful_AdResult, u32 fu32_FLevel)
+功    能: AD滤波处理
+说    明: 参考单片机版本c2程序
+入口参数: ful_AdResult：AD转换结果。fu32_FLevel：滤波级数
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+u32 Ad_Filter(u32 ful_AdResult, u32 fu32_FLevel)
+{
+    u8  sumnumber;
+    u8  i,j;
+    const u16 *adtpoint;
+    u32 adresult;
+    u32 *adpoint1;
+    u32 *adpoint2;
+    
+    //-------------------------------------------------
+    /*加料、定值和卸料过程中的滤波参数可以自由设置，滤波参数由小切换到大后，由于参与滤波计算的数组
+    变长，可能出现重量跳变问题。如卸料时滤波较小，卸料完成后变为大滤波，由于滤波数组变长，后面增加
+    的长度里面的数据要比前面的大（因为卸料过程重量是减小状态），可能导致滤波切换时重量变大问题。
+    为防止以上问题，在滤波参数变化前，进行采样数组刷新，用当前数组中的平均值来刷新后面的数组值。*/
+    static u32 su32_FLevel = 9;
+    if (fu32_FLevel > su32_FLevel)
+    {   //滤波参数由小变大刷新增加后的数组中重量
+         for (i = 0, adresult = 0; i < DFNUMBER[su32_FLevel]; i++)
+            adresult += gu32_AdQueue[i];
+        adresult /= i;
+        //刷新后面的数组值为计算的平均值
+        for (j = i; j < DFNUMBER[fu32_FLevel]; j++)
+            gu32_AdQueue[j] = adresult;
+    }
+    su32_FLevel = fu32_FLevel;
+    //---------------------------------------------------
+    
+    //将采样数组后移，新数据存入数组gu32_AdQueue[0]中
+    adpoint1 = gu32_AdQueue + 91;
+    adpoint2 = gu32_AdQueue + 90;
+    for(; adpoint1 > gu32_AdQueue ;adpoint1--, adpoint2--)
+        *adpoint1 = *adpoint2;
+    adpoint1 = gu32_AdQueue;
+    *adpoint1 = ful_AdResult;
+
+    adresult = 0;
+    adtpoint = FilterTab(fu32_FLevel);         /*指针指向对应的表格*/
+    sumnumber = (DFNUMBER[fu32_FLevel] - 1) / 2;        /*取得系数的个数*/
+    //因为滤波数组前后的数据是相同的，所以下面这样计算可以节省一半的循环时间
+    for (i = 0; i < sumnumber; i++, adtpoint++)
+        adresult += ((*adtpoint) * (gu32_AdQueue[i] + gu32_AdQueue[DFNUMBER[fu32_FLevel]-1-i]));
+    adresult += ((*(adtpoint)) * gu32_AdQueue[sumnumber]);
+    adresult /= DFCOESUM;
+    return(adresult);
+}
+
+/*********************************************************************
+函数名称: u32 AD_GetFedVal(u32 fu32_FLevel)
+功    能: 得到滤波后的AD码
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-10
+修    改:                      时    间: 
+*********************************************************************/
+u32 AD_GetFedVal(u32 fu32_FLevel)
+{
+    ULDATA ULADVal;
+    static u32 su32_AdTaskTime;
+    u32 lu32_Ad;
+    
+    gb_AdOflFlg = false;
+    
+    if (gb_AdOKFlg == false)     //如果之前AD初始化不成功则重新初始化
+    {
+        if (gu32_Sys10ms - su32_AdTaskTime > 5)      //超过50ms初始化一次
+        {
+            gb_AdOKFlg = AD_Init(gs_Setup.AdSamplingRate);
+            su32_AdTaskTime = gu32_Sys10ms;
+        }
+        gu32_AdValue = 0;
+    }
+    else
+    {
+        while(ADC_DOUT_READ)//AD未准备好
+        {
+            //如果超过50msAD转换还未准备好则重新初始化AD
+            //120/s的AD转换速率，每次AD转换大概8.3ms，50ms时间足够AD转换完成6次了
+            if (gu32_Sys10ms - su32_AdTaskTime > 5)
+            {
+                gb_AdOKFlg = AD_Init(gs_Setup.AdSamplingRate);
+                su32_AdTaskTime = gu32_Sys10ms;
+                gu32_AdValue = 0;
+            }
+        }
+        if (ADC_DOUT_READ == 0)
+        {
+            su32_AdTaskTime = gu32_Sys10ms;
+            ULADVal.ul = AD_ReadReg(ADCOM_KEEP);
+            gu32_AdValue = ULADVal.ul >> (8+5); //获取32-(8+5)=19位AD码
+        }
+    }
+    lu32_Ad = Ad_Filter(gu32_AdValue, fu32_FLevel);  //使用单片机版仪表的滤波算法
+    gb_SigWtFlg = false;
+    gb_OflFlg = false;
+    if (lu32_Ad > 0x7FFC0)                   //ad转换结果过大溢出
+    {
+        gb_AdOflFlg = true;
+        gb_OflFlg = true;
+    }
+    else if (lu32_Ad < 0x1F)                 //ad转换结果过小溢出
+    {
+        gb_AdOflFlg = true;
+        gb_OflFlg = true;
+        gb_SigWtFlg = true;
+    }
+    return lu32_Ad;
+}
+
+/*********************************************************************
+函数名称: u32 AD_ConvertTimes(u32 fu32_SysTime)
+功    能: 独立的功能函数，测试实际程序中每秒钟所能达到的AD转换次数
+说    明: 查询式AD转换可以放在主循环中，中断时AD转换可放在中断中
+入口参数: 系统时间，10ms
+返 回 值: AD转换  次/秒
+设    计: chx                  时    间: 2014-2-11
+修    改:                      时    间: 
+*********************************************************************/
+u32 AD_ConvertTimes(u32 fu32_SysTime)
+{
+    static u32 su32_AdTimes = 0;
+    static u32 su32_TimeTemp = 0;
+    static u32 su32_Result = 0;
+    
+    if (fu32_SysTime - su32_TimeTemp >= 100)    //1秒钟
+    {    
+        su32_TimeTemp = fu32_SysTime;
+        su32_AdTimes++;
+        su32_Result = su32_AdTimes;
+        su32_AdTimes = 0;
+    }
+    else
+        su32_AdTimes++;
+    
+    return su32_Result;
+}
+
+

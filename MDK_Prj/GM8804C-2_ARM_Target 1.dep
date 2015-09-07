@@ -1,0 +1,331 @@
+Dependencies for Project 'GM8804C-2_ARM', Target 'Target 1': (DO NOT MODIFY !)
+F (..\Source\main.c)(0x52A17C82)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\main.o --omf_browse .\output\main.crf --depend .\output\main.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\Source\Buzzer.c)(0x529FCD6A)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\buzzer.o --omf_browse .\output\buzzer.crf --depend .\output\buzzer.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\Source\IO.c)(0x52A0191C)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\io.o --omf_browse .\output\io.crf --depend .\output\io.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+F (..\Source\RTC.c)(0x52A11AAC)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\rtc.o --omf_browse .\output\rtc.crf --depend .\output\rtc.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\Source\F_RAM.c)(0x52A03ED0)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\f_ram.o --omf_browse .\output\f_ram.crf --depend .\output\f_ram.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\Source\UserLib.c)(0x52A01ED8)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\userlib.o --omf_browse .\output\userlib.crf --depend .\output\userlib.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\Source\VFD.c)(0x52A198FA)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\vfd.o --omf_browse .\output\vfd.crf --depend .\output\vfd.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\str71x\71x_it.c)(0x529D7F9C)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_it.o --omf_browse .\output\71x_it.crf --depend .\output\71x_it.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_it.h)(0x470AECE8)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\include.h)(0x52A18594)
+I (D:\Program Files\ARM_ADSv1_2\INCLUDE\stdlib.h)(0x3BEB19E6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\IO.h)(0x529EF31E)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\RTC.h)(0x52A026A0)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\Buzzer.h)(0x529EF320)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserBin.h)(0x529FF6C2)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\UserLib.h)(0x52A17FB4)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\F_RAM.h)(0x52A1997C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\Source\VFD.h)(0x52A1979E)
+F (..\str71x\src\71x_adc12.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_adc12.o --omf_browse .\output\71x_adc12.crf --depend .\output\71x_adc12.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+F (..\str71x\src\71x_apb.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_apb.o --omf_browse .\output\71x_apb.crf --depend .\output\71x_apb.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_bspi.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_bspi.o --omf_browse .\output\71x_bspi.crf --depend .\output\71x_bspi.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_can.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_can.o --omf_browse .\output\71x_can.crf --depend .\output\71x_can.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+F (..\str71x\src\71x_eic.c)(0x529D9912)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_eic.o --omf_browse .\output\71x_eic.crf --depend .\output\71x_eic.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_emi.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_emi.o --omf_browse .\output\71x_emi.crf --depend .\output\71x_emi.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_gpio.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_gpio.o --omf_browse .\output\71x_gpio.crf --depend .\output\71x_gpio.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_i2c.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_i2c.o --omf_browse .\output\71x_i2c.crf --depend .\output\71x_i2c.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+F (..\str71x\src\71x_lib.c)(0x529D96F0)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_lib.o --omf_browse .\output\71x_lib.crf --depend .\output\71x_lib.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_lib.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_adc12.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_apb.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_bspi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_can.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_eic.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_emi.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_gpio.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_i2c.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+F (..\str71x\src\71x_pcu.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_pcu.o --omf_browse .\output\71x_pcu.crf --depend .\output\71x_pcu.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_pcu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+F (..\str71x\src\71x_rccu.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_rccu.o --omf_browse .\output\71x_rccu.crf --depend .\output\71x_rccu.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_rtc.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_rtc.o --omf_browse .\output\71x_rtc.crf --depend .\output\71x_rtc.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rtc.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_tim.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_tim.o --omf_browse .\output\71x_tim.crf --depend .\output\71x_tim.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_tim.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\src\71x_uart.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_uart.o --omf_browse .\output\71x_uart.crf --depend .\output\71x_uart.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_uart.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+F (..\str71x\src\71x_wdg.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_wdg.o --omf_browse .\output\71x_wdg.crf --depend .\output\71x_wdg.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_wdg.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_rccu.h)(0x470AEC9A)
+F (..\str71x\src\71x_xti.c)(0x470AECA6)(-c --cpu ARM7TDMI -g -O2 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"-o .\output\71x_xti.o --omf_browse .\output\71x_xti.crf --depend .\output\71x_xti.d)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_xti.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_map.h)(0x470AEC9A)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\71x_conf.h)(0x529E9FB6)
+I (F:\WORK\GM8804C-2_ARM\131203 04c2_ARM 升级版 - 副本\str71x\inc\71x_type.h)(0x529EC97C)
+F (..\str71x\71x_init.s)(0x4E28DE9C)(--cpu ARM7TDMI -g-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"--list .\71x_init.lst --xref -o .\output\71x_init.o --depend .\output\71x_init.d)
+F (..\str71x\71x_vect.s)(0x529EA2B6)(--cpu ARM7TDMI -g-I "D:\Keil 5\ARM\RV31\INC"-I "D:\Keil 5\ARM\CMSIS\Include"-I "D:\Keil 5\ARM\Inc\ST\71x"--list .\71x_vect.lst --xref -o .\output\71x_vect.o --depend .\output\71x_vect.d)
+F (..\升级记录 Ver001.txt)(0x529E7DD2)()

@@ -1,0 +1,33 @@
+SET PATH=D:\Keil 5\ARM\ARMCC\bin\;D:\Program Files\Common Files\Siemens\Sqlany;C:\Program Files\Siemens\Step7\S7bin;D:\Program Files\ARM_ADSv1_2\bin;D:\Program Files\ARM\bin\win_32-pentium;D:\Program Files\ARM\RVD\Core\1.8\734\win_32-pentium\bin;C:\Program Files\NVIDIA Corporation\PhysX\Common;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;d:\Program Files\Windows7Master;D:\Program Files\ARM\RVCT\Programs\2.2\349\win_32-pentium;D:\Program Files\ARM\Utilities\FLEXlm\9.2\release\win_32-pentium;C:\Program Files\PKWARE\pkzipc
+SET CPU_TYPE=STR710FZ2
+SET CPU_VENDOR=STMicroelectronics
+SET UV2_TARGET=Target 1
+SET CPU_CLOCK=0x00A8C000
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\main.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\buzzer.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\io.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\rtc.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\f_ram.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\userlib.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\vfd.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_it.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_adc12.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_apb.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_bspi.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_can.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_eic.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_emi.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_gpio.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_i2c.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_lib.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_pcu.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_rccu.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_rtc.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_tim.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_uart.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_wdg.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmCC" --Via ".\output\71x_xti.__i"
+"D:\Keil 5\ARM\ARMCC\bin\ArmAsm" --Via ".\output\71x_init._ia"
+"D:\Keil 5\ARM\ARMCC\bin\ArmAsm" --Via ".\output\71x_vect._ia"
+"D:\Keil 5\ARM\ARMCC\bin\ArmLink" --Via ".\output\GM8804C-2_ARM.lnp"
+D:\Keil 5\ARM\ARMCC\bin\fromelf.exe ".\output\GM8804C-2_ARM.axf" --i32combined --output ".\output\GM8804C-2_ARM.hex"

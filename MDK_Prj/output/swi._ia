@@ -1,0 +1,6 @@
+--cpu ARM7TDMI -g --apcs=interwork 
+-I d:\Keil_v5\ARM\RV31\INC
+-I d:\Keil_v5\ARM\CMSIS\Include
+-I d:\Keil_v5\ARM\Inc\ST\71x
+--pd "__UVISION_VERSION SETA 513"
+--list .\swi.lst --xref -o .\output\swi.o --depend .\output\swi.d "..\str71x\ASM\SWI.s"

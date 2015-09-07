@@ -1,0 +1,984 @@
+/*************************************************
+Project:                GM8804C-2_ARM
+File name:              Adaptation.c
+Description:            加料自适应相关功能
+Author:                 丛海旭
+Version:                1.0
+Date:                   2015-8-19
+Others:                 
+History:                2015-8-21：该函数有三料速自适应相关功能，目前只做了两料速，默认中投和小投自适应
+*************************************************/
+
+#include "Adaptation.h"
+#include "RunState.h"
+#include "Recipe.h"
+#include "ADtoWeight.h"
+#include "F_RAM.h"
+#include "SetupState.h"
+#include "MathLogic.h"
+
+#define AD_SPEED        480                     //AD转换次数
+#define ADAPT_SP3_THRESHOLD_TIME        100      //小投修正的阈值时间(ms) 小投时间 <= 禁判时间+阈值 不修正
+//#define ADAPT_RUSHWT_SAMPLE_TIME        100     //中投过冲量采样时间 禁判时间结束后多少ms
+#define ADAPT_SP12_THRESHOLD_LIMIT      700     //中投修正判断时 小投最小时间的限制
+
+#define SLFALLWT    7       //小投落差及K值保存数组长度
+
+
+//自适应结构体相关参数初始化
+//移植时填充相关指针地址
+struct_adapt_t gs_Adapt =
+{
+    &(gs32_WtKalmanFed),            // 毛重包装时，指向毛重重量
+    &(gs_Rec.Middle),               // 指向中投提前量（修正时用） 
+    &(gs_Rec.Small),                // 指向落差提前量（修正时用） 
+    &(gs_DebugRunTime.u32Sp3Time),  // 指向实际测得的小投时间
+    &(gs_DebugRunTime.u32Sp2Time),  // 指向实际测得的中投时间
+    &(gu32_T2bTime),                //指向小投禁判时间
+    &(gs_DebugRunTime.s32SP3RealStopWt),   //实际小投停止重量
+    &(gs_DebugRunTime.s32SP2RealStopWt),   //实际中投停止重量
+    &(gs_PredictSp3.s32KThisTime),  //指向本次小投过程的线性拟合K值
+    &(gs32_SP2KFed),                //本次中投截止点附近的线性拟合K值
+    &(gu32_ADCntSP3Rush),           //中投截止点到过冲量采集点的AD次数
+    
+};
+
+/*********************************************************************
+函数名称: Adapt_InitData
+功    能: 自适应功能相关参数初始化
+说    明: 移植时填充 每次加料前都调用
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-21
+修    改:                      时    间: 
+*********************************************************************/
+void Adapt_InitData(struct_adapt_t *pfs_Adapt)
+{
+    const u32 u32ScopeValue[] = {0, 25, 50, 100};         // 落差修正幅度
+    const u32 u32MinTime[] = {50, 100, 150, 200, 250, 300, 350, 400};    // 大/中投修正等级对应的小投时间
+
+    pfs_Adapt->u32AdatpEn         = gs_Setup.AdaptSW;
+    pfs_Adapt->s32RushWt          = 0;
+
+    pfs_Adapt->u32SP2En           = gs_Setup.AdaptSP2SW;
+    pfs_Adapt->u32SP2Range        = gs_Setup.AdaptSP2LimitRng;
+    pfs_Adapt->u32SP2ThresholdMin = gs_Setup.AdaptSP2Level;
+    pfs_Adapt->u32SP2ThresholdVal = gs_Setup.AdaptSP2TimeThreshold;
+    pfs_Adapt->u32SP2Scope       = gs_Setup.AdaptSP2Scope;
+    
+    pfs_Adapt->s32ConfirmWt      = 0;
+    pfs_Adapt->s32TargetVal      = gs_Rec.Target;
+
+    pfs_Adapt->u32SP3En          = gs_Setup.AdaptSP3SW;
+    pfs_Adapt->u32SP3Range       = gs_Setup.AdaptSP3LimitRng;
+    pfs_Adapt->u32SP3Scope       = gs_Setup.AdaptSP3Scope;
+    pfs_Adapt->s32SP3KProb       = 0;
+}
+
+/*********************************************************************
+函数名称: SaveSP2Value
+功    能: 保存中投提前量到铁电
+说    明: 移植时填充该函数
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-21
+修    改:                      时    间: 
+*********************************************************************/
+void SaveSP2Value(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->s32SP2Bkp = (*pfs_Adapt->ps32SP2);   //更新备份值
+    FRAM_WriteDW(FMAddr_Middle(gu32_RecNum), (*pfs_Adapt->ps32SP2));
+}
+
+/*********************************************************************
+函数名称: void SaveSP3Value(s32 fs32_Value)
+功    能: 保存小投提前量到铁电
+说    明: 移植时填充该函数
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-21
+修    改:                      时    间: 
+*********************************************************************/
+void SaveSP3Value(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->s32SP3Bkp = (*pfs_Adapt->ps32SP3);   //更新备份值
+    FRAM_WriteDW(FMAddr_Small(gu32_RecNum), (*pfs_Adapt->ps32SP3));
+}
+
+void Adapt_InitSP2Temp(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->s32SP2Bkp = (*pfs_Adapt->ps32SP2);
+    pfs_Adapt->u32SP2Count = 0;
+    pfs_Adapt->u32SP2SubCount = 0;
+}
+
+
+void Adapt_InitSP3Temp(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->s32SP3Bkp = (*pfs_Adapt->ps32SP3);
+    pfs_Adapt->u32SP3Count = 0;
+}
+
+/*********************************************************************
+函数名称: Adapt_InitDataFirstRun
+功    能: 自适应功能相关参数初始化
+说    明: 给启动命令时调用一次
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-21
+修    改:                      时    间: 
+*********************************************************************/
+void Adapt_InitDataFirstRun(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->bFirstIn = true;
+//    pfs_Adapt.s32SP2Bkp = (*pfs_Adapt.ps32SP2);
+//    pfs_Adapt.s32SP3Bkp = (*pfs_Adapt.ps32SP3);
+    Adapt_InitSP2Temp(pfs_Adapt);
+    Adapt_InitSP3Temp(pfs_Adapt);
+}
+
+/*********************************************************************
+函数名称: BubbleSort
+功    能: 冒泡排序
+说    明: 
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+void BubbleSort(s32 *pfs32_Array, u32 n)
+{ 
+    u32 i, j; 
+    s32 temp;
+
+    for(i = 0; i < n - 1; i++) 
+    { 
+        for(j = 0; i + j < n - 1; j++) 
+        { 
+            if(pfs32_Array[j] > pfs32_Array[j + 1]) 
+            { 
+                temp = pfs32_Array[j]; 
+                pfs32_Array[j] = pfs32_Array[j + 1]; 
+                pfs32_Array[j + 1] = temp; 
+            } 
+        } 
+    } 
+}
+
+/*********************************************************************
+函数名称: BubbleSortFloat
+功    能: 冒泡排序 float类型
+说    明: 
+入口参数: 
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+void BubbleSortFloat(float *pff_Array, u32 n)
+{ 
+    u32 i, j; 
+    s32 temp;
+
+    for(i = 0; i < n - 1; i++) 
+    { 
+        for(j = 0; i + j < n - 1; j++) 
+        { 
+            if(pff_Array[j] > pff_Array[j + 1]) 
+            { 
+                temp = pff_Array[j]; 
+                pff_Array[j] = pff_Array[j + 1]; 
+                pff_Array[j + 1] = temp; 
+            } 
+        } 
+    } 
+}
+
+/*********************************************************************
+函数名称: SP2LinearKProbabilityStatistics
+功    能: 概率统计方法处理小投线性拟合K值
+说    明: 该函数一定放在FallWtProbabilityStatistics函数前面
+          因为FallWtProbabilityStatistics函数中有对pfs_Adapt->u32SP3Count++的操作
+入口参数: pfs_Adapt=自适应参数结构体
+          fs32_KThisTime=实际得到的本次K值
+出口参数: 
+返 回 值: 统计处理后的K值
+设    计: 丛海旭               时    间: 2015-8-25
+修    改:                      时    间: 
+*********************************************************************/
+s32 SP2LinearKProbabilityStatistics(struct_adapt_t *pfs_Adapt, s32 fs32_KThisTime)
+{
+    s32 ls32_Result = 0;
+    u32 i = 0;
+    static s32 lss32_AddFallWTemp = 0;
+    static s32 lss32_KRecord[SLFALLWT];
+    static s32 lss32_K_Pro[SLFALLWT];
+        
+    if(pfs_Adapt->u32SP3Count>(SLFALLWT-1))
+    {
+         for(i=0;i<(SLFALLWT-1);i++)
+         {
+            lss32_KRecord[i] = lss32_KRecord[i+1];
+            lss32_K_Pro[i] = lss32_KRecord[i];
+         }
+         lss32_KRecord[SLFALLWT-1] = fs32_KThisTime;
+         lss32_K_Pro[SLFALLWT-1] = fs32_KThisTime;
+    
+         BubbleSort(lss32_K_Pro, SLFALLWT); //冒泡排序
+         ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2]*3+lss32_K_Pro[3]*5+lss32_K_Pro[4]*3+lss32_K_Pro[5])/13;  //由于统计出落差值偏大
+    }  
+    else if(pfs_Adapt->u32SP3Count>=2)
+    {
+         lss32_KRecord[pfs_Adapt->u32SP3Count] = fs32_KThisTime;
+         for(i=0;i<=pfs_Adapt->u32SP3Count;i++)
+         {
+             lss32_K_Pro[i] = lss32_KRecord[i];
+         }       
+         BubbleSort(lss32_K_Pro, pfs_Adapt->u32SP3Count + 1); //冒泡排序
+         if(pfs_Adapt->u32SP3Count>=4)
+         {
+             ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2]*2+lss32_K_Pro[3])/4;
+         }
+         else if(pfs_Adapt->u32SP3Count>=3)
+         {
+             ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2])/2;
+         }
+         else if(pfs_Adapt->u32SP3Count>=2)
+         {
+             ls32_Result = lss32_K_Pro[1];
+         }       
+//         pfs_Adapt->u32SP3Count++;
+    }
+    else
+    {
+         if(pfs_Adapt->u32SP3Count==0) //如果是刚启动，清零
+         {
+            lss32_AddFallWTemp = 0;
+         }
+         lss32_KRecord[pfs_Adapt->u32SP3Count] = fs32_KThisTime;
+//         pfs_Adapt->u32SP3Count++;       
+         lss32_AddFallWTemp += fs32_KThisTime;
+         ls32_Result = lss32_AddFallWTemp/(pfs_Adapt->u32SP3Count + 1);       
+    }
+    
+    return ls32_Result;
+}
+
+
+/*********************************************************************
+函数名称: SP2FluxProbabilityStatistics
+功    能: 概率统计方法处理小投线性拟合K值
+说    明: 该函数一定放在FallWtProbabilityStatistics函数前面
+          因为FallWtProbabilityStatistics函数中有对pfs_Adapt->u32SP3Count++的操作
+入口参数: pfs_Adapt=自适应参数结构体
+          ff_SP2Flux=本次计算中投流量
+出口参数: 
+返 回 值: 统计处理后的中投流量
+设    计: 丛海旭               时    间: 2015-8-25
+修    改:                      时    间: 
+*********************************************************************/
+float SP2FluxProbabilityStatistics(struct_adapt_t *pfs_Adapt, float ff_SP2Flux)
+{
+    float lf_Result = 0;
+    u32 i = 0;
+    static float lsf_AddFallWTemp = 0;
+    static float lsf_FluxRecord[SLFALLWT];
+    static float lsf_FluxPro[SLFALLWT];
+        
+    if(pfs_Adapt->u32SP3Count>(SLFALLWT-1))
+    {
+         for(i=0;i<(SLFALLWT-1);i++)
+         {
+            lsf_FluxRecord[i] = lsf_FluxRecord[i+1];
+            lsf_FluxPro[i] = lsf_FluxRecord[i];
+         }
+         lsf_FluxRecord[SLFALLWT-1] = ff_SP2Flux;
+         lsf_FluxPro[SLFALLWT-1] = ff_SP2Flux;
+    
+         BubbleSortFloat(lsf_FluxPro, SLFALLWT); //冒泡排序
+         lf_Result = (lsf_FluxPro[1]+lsf_FluxPro[2]*3+lsf_FluxPro[3]*5+lsf_FluxPro[4]*3+lsf_FluxPro[5])/13;  //由于统计出落差值偏大
+    }  
+    else if(pfs_Adapt->u32SP3Count>=2)
+    {
+         lsf_FluxRecord[pfs_Adapt->u32SP3Count] = ff_SP2Flux;
+         for(i=0;i<=pfs_Adapt->u32SP3Count;i++)
+         {
+             lsf_FluxPro[i] = lsf_FluxRecord[i];
+         }       
+         BubbleSortFloat(lsf_FluxPro, pfs_Adapt->u32SP3Count + 1); //冒泡排序
+         if(pfs_Adapt->u32SP3Count>=4)
+         {
+             lf_Result = (lsf_FluxPro[1]+lsf_FluxPro[2]*2+lsf_FluxPro[3])/4;
+         }
+         else if(pfs_Adapt->u32SP3Count>=3)
+         {
+             lf_Result = (lsf_FluxPro[1]+lsf_FluxPro[2])/2;
+         }
+         else if(pfs_Adapt->u32SP3Count>=2)
+         {
+             lf_Result = lsf_FluxPro[1];
+         }       
+//         pfs_Adapt->u32SP3Count++;
+    }
+    else
+    {
+         if(pfs_Adapt->u32SP3Count==0) //如果是刚启动，清零
+         {
+            lsf_AddFallWTemp = 0;
+         }
+         lsf_FluxRecord[pfs_Adapt->u32SP3Count] = ff_SP2Flux;
+//         pfs_Adapt->u32SP3Count++;       
+         lsf_AddFallWTemp += ff_SP2Flux;
+         lf_Result = lsf_AddFallWTemp/(pfs_Adapt->u32SP3Count + 1);       
+    }
+    
+    return lf_Result;
+}
+
+/*********************************************************************
+函数名称: SP3LinearKProbabilityStatistics
+功    能: 概率统计方法处理小投线性拟合K值
+说    明: 该函数一定放在FallWtProbabilityStatistics函数前面
+          因为FallWtProbabilityStatistics函数中有对pfs_Adapt->u32SP3Count++的操作
+入口参数: pfs_Adapt=自适应参数结构体
+          fs32_KThisTime=实际得到的本次K值
+出口参数: 
+返 回 值: 统计处理后的K值
+设    计: 丛海旭               时    间: 2015-8-25
+修    改:                      时    间: 
+*********************************************************************/
+s32 SP3LinearKProbabilityStatistics(struct_adapt_t *pfs_Adapt, s32 fs32_KThisTime)
+{
+    #define DEFAULT_SP3K    1050    //当计算K为0时 默认该值最为K值
+    
+    s32 ls32_Result = 0;
+    u32 i = 0;
+    static s32 lss32_AddFallWTemp = 0;
+    static s32 lss32_KRecord[SLFALLWT];
+    static s32 lss32_K_Pro[SLFALLWT];
+    //小投K值没有采集到 可能因为小投没有达到采集的时间 则默认用上一次的K值
+    if (fs32_KThisTime == 0)    
+    {
+        if (pfs_Adapt->u32SP3Count == 0)
+            fs32_KThisTime = DEFAULT_SP3K;
+        else if (pfs_Adapt->u32SP3Count > 0 && pfs_Adapt->u32SP3Count <= SLFALLWT)
+            fs32_KThisTime = lss32_KRecord[pfs_Adapt->u32SP3Count-1];
+        else
+            fs32_KThisTime = lss32_KRecord[SLFALLWT-1];
+    }
+        
+    if(pfs_Adapt->u32SP3Count>(SLFALLWT-1))
+    {
+         for(i=0;i<(SLFALLWT-1);i++)
+         {
+            lss32_KRecord[i] = lss32_KRecord[i+1];
+            lss32_K_Pro[i] = lss32_KRecord[i];
+         }
+         lss32_KRecord[SLFALLWT-1] = fs32_KThisTime;
+         lss32_K_Pro[SLFALLWT-1] = fs32_KThisTime;
+    
+         BubbleSort(lss32_K_Pro, SLFALLWT); //冒泡排序
+         ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2]*3+lss32_K_Pro[3]*5+lss32_K_Pro[4]*3+lss32_K_Pro[5])/13;  //由于统计出落差值偏大
+    }  
+    else if(pfs_Adapt->u32SP3Count>=2)
+    {
+         lss32_KRecord[pfs_Adapt->u32SP3Count] = fs32_KThisTime;
+         for(i=0;i<=pfs_Adapt->u32SP3Count;i++)
+         {
+             lss32_K_Pro[i] = lss32_KRecord[i];
+         }       
+         BubbleSort(lss32_K_Pro, pfs_Adapt->u32SP3Count + 1); //冒泡排序
+         if(pfs_Adapt->u32SP3Count>=4)
+         {
+             ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2]*2+lss32_K_Pro[3])/4;
+         }
+         else if(pfs_Adapt->u32SP3Count>=3)
+         {
+             ls32_Result = (lss32_K_Pro[1]+lss32_K_Pro[2])/2;
+         }
+         else if(pfs_Adapt->u32SP3Count>=2)
+         {
+             ls32_Result = lss32_K_Pro[1];
+         }       
+//         pfs_Adapt->u32SP3Count++;
+    }
+    else
+    {
+         if(pfs_Adapt->u32SP3Count==0) //如果是刚启动，清零
+         {
+            lss32_AddFallWTemp = 0;
+         }
+         lss32_KRecord[pfs_Adapt->u32SP3Count] = fs32_KThisTime;
+//         pfs_Adapt->u32SP3Count++;       
+         lss32_AddFallWTemp += fs32_KThisTime;
+         ls32_Result = lss32_AddFallWTemp/(pfs_Adapt->u32SP3Count + 1);       
+    }
+    
+    return ls32_Result;
+    
+    #undef DEFAULT_SP3K
+}
+
+/*********************************************************************
+函数名称: FallWtProbabilityStatistics
+功    能: 概率统计方法处理落差值
+说    明: 采用概率统计处理方法处理落差，避免个别大误差造成误修正
+入口参数: pfs_Adapt : 自适应参数结构体
+          fs32_RealFallWt : 实际得到的落差
+出口参数: 
+返 回 值: 统计处理后的落差值
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+s32 FallWtProbabilityStatistics(struct_adapt_t *pfs_Adapt, s32 fs32_RealFallWt)
+{
+    s32 ls32_BestFall = 0;
+    u32 i = 0;
+    static s32 lss32_AddFallWTemp = 0;
+    static s32 lss32_FallWRecord[SLFALLWT];
+    static s32 lss32_FallW_Pro[SLFALLWT];
+    
+    if(pfs_Adapt->u32SP3Count>(SLFALLWT-1))
+    {
+         for(i=0;i<(SLFALLWT-1);i++)
+         {
+            lss32_FallWRecord[i] = lss32_FallWRecord[i+1];
+            lss32_FallW_Pro[i] = lss32_FallWRecord[i];
+         }
+         lss32_FallWRecord[SLFALLWT-1] = fs32_RealFallWt;
+         lss32_FallW_Pro[SLFALLWT-1] = fs32_RealFallWt;
+    
+         BubbleSort(lss32_FallW_Pro, SLFALLWT); //冒泡排序
+         ls32_BestFall = (lss32_FallW_Pro[1]+lss32_FallW_Pro[2]*3+lss32_FallW_Pro[3]*5+lss32_FallW_Pro[4]*3+lss32_FallW_Pro[5])/13;  //由于统计出落差值偏大
+    }  
+    else if(pfs_Adapt->u32SP3Count>=2)
+    {
+         lss32_FallWRecord[pfs_Adapt->u32SP3Count] = fs32_RealFallWt;
+         for(i=0;i<=pfs_Adapt->u32SP3Count;i++)
+         {
+             lss32_FallW_Pro[i] = lss32_FallWRecord[i];
+         }       
+         BubbleSort(lss32_FallW_Pro, pfs_Adapt->u32SP3Count + 1); //冒泡排序
+         if(pfs_Adapt->u32SP3Count>=4)
+         {
+             ls32_BestFall = (lss32_FallW_Pro[1]+lss32_FallW_Pro[2]*2+lss32_FallW_Pro[3])/4;
+         }
+         else if(pfs_Adapt->u32SP3Count>=3)
+         {
+             ls32_BestFall = (lss32_FallW_Pro[1]+lss32_FallW_Pro[2])/2;
+         }
+         else if(pfs_Adapt->u32SP3Count>=2)
+         {
+             ls32_BestFall = lss32_FallW_Pro[1];
+         }       
+         pfs_Adapt->u32SP3Count++;
+    }
+    else
+    {
+         if(pfs_Adapt->u32SP3Count==0) //如果是刚启动，清零
+         {
+            lss32_AddFallWTemp = 0;
+         }
+         lss32_FallWRecord[pfs_Adapt->u32SP3Count] = fs32_RealFallWt;
+         pfs_Adapt->u32SP3Count++;       
+         lss32_AddFallWTemp += fs32_RealFallWt;
+         ls32_BestFall = lss32_AddFallWTemp/pfs_Adapt->u32SP3Count;       
+    }
+    
+    return ls32_BestFall;
+   
+}
+
+/*********************************************************************
+函数名称: ModifyFallWeight
+功    能: 落差修正函数
+说    明: 
+入口参数: RealFallweightSub=真实落差和设置落差的差值
+          *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+s32 ModifyFallWeight(s32 RealFallweightSub, struct_adapt_t *pfs_Adapt)
+{
+    s32 ls32_ModifyFall = 0;
+    s32 ls32_RealFallweightTemp = 0;
+    //计算判断落差修正范围
+    ls32_RealFallweightTemp = pfs_Adapt->s32TargetVal * (s32)pfs_Adapt->u32SP3Range / (s32)1000;
+    if(RealFallweightSub > ls32_RealFallweightTemp)  //限幅
+    {
+        RealFallweightSub = ls32_RealFallweightTemp;
+    }   
+    else if(RealFallweightSub < (0 - ls32_RealFallweightTemp))   //限幅
+    {
+        RealFallweightSub = 0 - ls32_RealFallweightTemp;
+    }   
+    ls32_ModifyFall = (RealFallweightSub * ((s32)pfs_Adapt->u32SP3Scope) / (s32)100);
+
+    return ls32_ModifyFall;
+}
+
+
+/*********************************************************************
+函数名称: Adapt_SP3
+功    能: 小投提前量自适应
+说    明: 
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 1=完成 0=未完成
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+u32 Adapt_SP3(struct_adapt_t *pfs_Adapt)
+{
+    s32  ls32_Temp = 0;       // 临时变量
+    s32  ls32_FallTemp = 0;   // 落差值临时变量
+    
+    if((0 == pfs_Adapt->u32SP3En) || (0 == pfs_Adapt->u32SP3Range))   // 开关关闭 / 修正范围为0 则不修正
+    {
+        Adapt_InitSP3Temp(pfs_Adapt);
+    }
+    else
+    {
+        if(pfs_Adapt->s32SP3Bkp != (*pfs_Adapt->ps32SP3)) // 落差被修改
+        {
+            Adapt_InitSP3Temp(pfs_Adapt);
+        }
+        else if((*pfs_Adapt->pu32SP3RealTime) <= ((*pfs_Adapt->pu32SP3ForbidTime) + ADAPT_SP3_THRESHOLD_TIME))
+        {   // 小投时间 <= 禁判时间+阈值  不修正
+            // 不修
+        }
+        else
+        {
+            if(0 == pfs_Adapt->s32ConfirmWt)   // 未进行过欠差补料或高速定值前10次学习的定值重量
+            {
+                pfs_Adapt->s32ConfirmWt = (*pfs_Adapt->ps32Weight);
+            }
+            //根据统计得出落差值
+            ls32_Temp = FallWtProbabilityStatistics(pfs_Adapt, (pfs_Adapt->s32ConfirmWt - (*pfs_Adapt->ps32SP3RealWt)));
+            pfs_Adapt->u32SP3Prob = ls32_Temp;  //统计落差值 打印用
+            ls32_Temp -= *pfs_Adapt->ps32SP3;
+            ls32_FallTemp = ModifyFallWeight(ls32_Temp, pfs_Adapt);
+            pfs_Adapt->s32SP3AdaptVal = ls32_FallTemp; //调整值 打印用
+            *pfs_Adapt->ps32SP3 += ls32_FallTemp;
+            SaveSP3Value(pfs_Adapt);  //保存落差值到铁电
+        }
+    }
+    return 1;
+}
+
+
+/*********************************************************************
+函数名称: SampleRushWt
+功    能: 采集快加过冲重量 防御小投加料过程中禁比时间结束后处理
+说    明: 移植时将该函数放在禁判时间之后
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: true=中投过冲量采集完毕
+设    计: 丛海旭               时    间: 2015-08-20
+修    改:                      时    间: 
+*********************************************************************/
+bool SampleRushWt(struct_adapt_t *pfs_Adapt)
+{
+    if((*pfs_Adapt->pu32SP3RealTime) <= ((*pfs_Adapt->pu32SP3ForbidTime) + pfs_Adapt->u32SP2ThresholdMin))  
+    {   //小于等于禁判时间+判定修正中投的小投禁判后最小时间
+        pfs_Adapt->s32RushWt = (*pfs_Adapt->ps32Weight) - (*pfs_Adapt->ps32SP2RealWt);//当前重量 - 中投截止点实际重量;
+        pfs_Adapt->u32SP2ResultWt = (*pfs_Adapt->ps32Weight);
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+//    if(false == pfs_Adapt->bFirstIn) // 启动后第一包不修
+//    {
+//        if(gstrRunResult.u32MidFeedTime > 0)    // 实际中投时间 > 0 
+//        {
+//            //快加默认用中投
+//            if((*pfs_Adapt->pu32SP3RealTime) <= ((*pfs_Adapt->pu32SP3ForbidTime) + pfs_Adapt->u32SP2ThresholdMin))  
+//            {   //小于等于禁判时间+判定修正中投的小投禁判后最小时间
+//                pfs_Adapt->s32RushWt = (*pfs_Adapt->ps32Weight) - (*pfs_Adapt->ps32SP2RealWt);//当前重量 - 中投截止点实际重量;
+//            }
+//        }
+//        else if(gstrRunResult.u32FastFeedTime > 0) // 实际大投时间 > 0 
+//        {
+//            if(gstrRunResult.pu32SP3RealTime == gstrRunResult.u32SP3RealForbTime)//实际小投时间等于禁判时间
+//            {
+//                pfs_Adapt.s32RushWt = 当前重量 - 大投截止点实际重量;
+//            }
+//            else if(gstrRunResult.pu32SP3RealTime == (gstrRunResult.u32SP3RealForbTime + 100))//等于禁判时间+100
+//            {
+//                pfs_Adapt.s32RushWt = 当前重量 - 大投截止点实际重量;
+//            }
+//            else if(gstrRunResult.pu32SP3RealTime < (gstrRunResult.u32SP3RealForbTime + 100))//小于禁判时间+100
+//            {
+//                pfs_Adapt.s32RushWt = 小投截止点重量 - 大投截止点实际重量;
+//            }
+//        }
+//    }
+}
+
+/*********************************************************************
+函数名称: RushStdError
+功    能: 过冲量概率统计函数
+说    明: 
+入口参数: fs32_RealStdErrorDelta=实际过冲值变化量
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-20
+修    改:                      时    间: 
+*********************************************************************/
+s32 RushStdError(struct_adapt_t *pfs_Adapt, s32 fs32_RealStdErrorDelta)
+{
+    #define SLRUSHERRWT 50
+    s32 ls32_StdError = 0;
+    static s32 lss32_SlRushRecord[SLRUSHERRWT];
+    static s32 lss32_SlRushRecord_pro[SLRUSHERRWT];
+    s32 ls32_SumErrorTemp = 0;
+    u32 i = 0;
+        
+    if(pfs_Adapt->u32SP2SubCount>SLRUSHERRWT-1)
+    {
+        for(i=0;i<SLRUSHERRWT-1;i++)
+        {
+            lss32_SlRushRecord[i] = lss32_SlRushRecord[i+1];
+            lss32_SlRushRecord_pro[i] = lss32_SlRushRecord[i];
+        }
+        lss32_SlRushRecord[SLRUSHERRWT-1] = fs32_RealStdErrorDelta;
+        lss32_SlRushRecord_pro[SLRUSHERRWT-1] = fs32_RealStdErrorDelta;
+        
+        BubbleSort(lss32_SlRushRecord_pro, SLRUSHERRWT); //冒泡排序
+        
+        ls32_SumErrorTemp = 0;           //用于做判断的值
+        for(i=2;i<SLRUSHERRWT-2;i++)
+        {
+            ls32_SumErrorTemp += lss32_SlRushRecord_pro[i]; //可以有效去掉极值 
+        }
+        ls32_SumErrorTemp = ls32_SumErrorTemp/(SLRUSHERRWT-4);
+        
+        ls32_StdError = (lss32_SlRushRecord_pro[SLRUSHERRWT-2]+lss32_SlRushRecord_pro[SLRUSHERRWT-3]*6+lss32_SlRushRecord_pro[SLRUSHERRWT-4]*3)/10;
+        if(pfs_Adapt->u32SP2SubCount>SLRUSHERRWT)
+            pfs_Adapt->u32SP2SubCount = SLRUSHERRWT;
+    }
+    else
+    {
+        lss32_SlRushRecord[pfs_Adapt->u32SP2SubCount] = fs32_RealStdErrorDelta;
+        lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount] = fs32_RealStdErrorDelta;
+        
+        BubbleSort(lss32_SlRushRecord_pro, pfs_Adapt->u32SP2SubCount + 1); //冒泡排序
+
+        ls32_SumErrorTemp = 0;           //用于做判断的值 
+        if(pfs_Adapt->u32SP2SubCount<3)
+        {           
+            for(i=0;i<pfs_Adapt->u32SP2SubCount+1;i++)
+            {
+                ls32_SumErrorTemp += lss32_SlRushRecord_pro[i]; //可以有效去掉极值 
+            }               
+            ls32_SumErrorTemp = ls32_SumErrorTemp/(pfs_Adapt->u32SP2SubCount+1);
+            ls32_StdError = lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount]*11/10;
+        }
+        else if(pfs_Adapt->u32SP2SubCount<10)
+        {
+            for(i=1;i<pfs_Adapt->u32SP2SubCount-1;i++)
+            {
+                ls32_SumErrorTemp += lss32_SlRushRecord_pro[i]; //可以有效去掉极值 
+            }
+            ls32_SumErrorTemp = ls32_SumErrorTemp/(pfs_Adapt->u32SP2SubCount-2);
+            ls32_StdError = lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount-1]*11/10;
+        }   
+        else if(pfs_Adapt->u32SP2SubCount<SLRUSHERRWT)
+        {
+            for(i=1;i<pfs_Adapt->u32SP2SubCount-2;i++)
+            {
+                ls32_SumErrorTemp += lss32_SlRushRecord_pro[i]; //可以有效去掉极值 
+            }
+            ls32_SumErrorTemp = ls32_SumErrorTemp/(pfs_Adapt->u32SP2SubCount-3);
+            ls32_StdError = (lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount-1]*3+lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount-2]*6+lss32_SlRushRecord_pro[pfs_Adapt->u32SP2SubCount-3])/10;
+
+        }
+        pfs_Adapt->u32SP2SubCount++;        
+    }   
+    return ls32_StdError;
+    
+#undef SLRUSHERRWT
+}
+
+/*********************************************************************
+函数名称: RushWtProbabilityStatistics
+功    能: 概率统计方法处理快加过冲量
+说    明: 
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 返回在90%的最大幅值
+设    计: 丛海旭               时    间: 2015-08-20
+修    改:                      时    间: 
+*********************************************************************/
+s32 RushWtProbabilityStatistics(struct_adapt_t *pfs_Adapt)
+{
+    #define SLRUSHWT   7
+    s32 ls32_StdError = 0;
+    static s32 lss32_SlRRecord[SLRUSHWT];
+    static s32 lss32_SlRRecord_pro[SLRUSHWT];
+    u32 i = 0;
+//    s32 ls32_MaxToMin = 0;
+    s32 ls32_StdRushW = 0;
+    s32 ls32_AddStdRushW = 0;    
+
+    if(pfs_Adapt->u32SP2Count>SLRUSHWT-1)
+    {
+        for(i=0;i<SLRUSHWT-1;i++)
+        {
+            lss32_SlRRecord[i] = lss32_SlRRecord[i+1];
+            lss32_SlRRecord_pro[i] = lss32_SlRRecord[i];
+        }
+        lss32_SlRRecord[SLRUSHWT-1] = pfs_Adapt->s32RushWt;
+        lss32_SlRRecord_pro[SLRUSHWT-1] = pfs_Adapt->s32RushWt;
+        BubbleSort(lss32_SlRRecord_pro, SLRUSHWT); //冒泡排序
+
+        ls32_StdRushW = (lss32_SlRRecord_pro[2]+lss32_SlRRecord_pro[3]*2+lss32_SlRRecord_pro[4])/4;
+//        ls32_MaxToMin = lss32_SlRRecord_pro[SLRUSHWT-1] - ls32_StdRushW;
+//        ls32_StdError = RushStdError(pfs_Adapt, ls32_MaxToMin);    //重点
+//        ls32_StdRushW = ls32_StdRushW + ls32_StdError;
+    }
+    else
+    {       
+        lss32_SlRRecord[pfs_Adapt->u32SP2Count] = pfs_Adapt->s32RushWt;
+        for(i=0;i<pfs_Adapt->u32SP2Count+1;i++)
+        {
+            ls32_AddStdRushW += lss32_SlRRecord[i];
+        }
+        ls32_StdRushW = ls32_AddStdRushW/(pfs_Adapt->u32SP2Count+1);
+        ls32_StdRushW = ls32_StdRushW + ((*pfs_Adapt->ps32SP3) * (s32)3 / (s32)2);
+        pfs_Adapt->u32SP2Count++;
+    }
+//  ls32_StdRushW = ls32_StdRushW + GetRDataPointer()->EXFallWeight;//过冲预留量  
+        
+    #undef SLRUSHWT
+    return ls32_StdRushW;
+}
+
+/*********************************************************************
+函数名称: ModifyRushWeight
+功    能: 中投修正函数
+说    明: 
+入口参数: fs32_RealRushweight=得到的中投落差
+          *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 修正后的中投落差
+设    计: 丛海旭               时    间: 2015-08-20
+修    改:                      时    间: 
+*********************************************************************/
+s32 ModifyRushWeight(s32 fs32_RealRushweight, struct_adapt_t *pfs_Adapt)
+{
+    s32 ls32_ModifyRushW = 0;
+    s32 ls32_RealRushweightTemp = 0;
+    
+    ls32_RealRushweightTemp = pfs_Adapt->s32TargetVal * (s32)pfs_Adapt->u32SP2Range / (s32)1000;
+
+    if(fs32_RealRushweight > ls32_RealRushweightTemp)    //限幅
+    {
+        fs32_RealRushweight = ls32_RealRushweightTemp;
+    }   
+    else if(fs32_RealRushweight < (0 - ls32_RealRushweightTemp))     //限幅
+    {
+        fs32_RealRushweight = 0 - ls32_RealRushweightTemp;
+    }   
+    ls32_ModifyRushW = (fs32_RealRushweight * ((s32)pfs_Adapt->u32SP2Scope) / (s32)100);
+
+    return ls32_ModifyRushW;
+}
+
+
+/*********************************************************************
+函数名称: Adapt_SP12
+功    能: 大中投提前量修正 此程序只有中投修正
+说    明: 
+    中投修正原理：
+    1.中投过冲采集点时重量
+    2.计算过冲点调整量
+    3.采集中投时间
+    4.采集中投截止点附近线性拟合K值
+    5.采集小投线性拟合K值
+    6.中投截止点 到 过冲采集点的时间
+    7.中投截止点 到 过冲采集点 小投加的重量 = 小投K × 时间 
+    8.中投加的重量 = 中投过冲采集点时重量 - 小投加的重量
+    9.中投流量 = 中投加的重量 / 中投时间
+    10.中投调整时间 = 过冲点调整量 / 中投流量
+    11.中投调整结果 = 调整时间 × 中投线性拟合K
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 1=完成 0=未完成
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+u32 Adapt_SP12(struct_adapt_t *pfs_Adapt)
+{
+    s32 ls32_Temp = 0;       // 临时变量
+    s32 ls32_InterestWeight = 0;
+    u32 lu32_XMinTime = 0;
+
+    if((0 == pfs_Adapt->u32SP2En) || (0 == pfs_Adapt->u32SP2Range)) // 开关关闭/ 修正范围为0
+    {
+        Adapt_InitSP2Temp(pfs_Adapt);
+        pfs_Adapt->bFirstIn = true;
+    }
+    else
+    {
+        if((pfs_Adapt->s32SP2Bkp != (*pfs_Adapt->ps32SP2)))           // 修中投，且中投提前量被修改
+        {
+            Adapt_InitSP2Temp(pfs_Adapt);
+            pfs_Adapt->bFirstIn = true;
+        }
+        else
+        {
+            //统计得到小投线性拟合K值 注意该函数要放在FallWtProbabilityStatistics之前
+            pfs_Adapt->s32SP3KProb = SP3LinearKProbabilityStatistics(pfs_Adapt, *pfs_Adapt->ps32SP3KThisTime);
+            //统计得到中投截止点附近线性拟合K值 注意该函数要放在FallWtProbabilityStatistics之前
+            pfs_Adapt->s32SP2KProb = SP2LinearKProbabilityStatistics(pfs_Adapt, *pfs_Adapt->ps32SP2KThisTime);
+            
+            lu32_XMinTime = (*pfs_Adapt->pu32SP3ForbidTime) + pfs_Adapt->u32SP2ThresholdMin;         // 大投修正时，小投下限时间
+            if(lu32_XMinTime < ADAPT_SP12_THRESHOLD_LIMIT)
+            {
+                lu32_XMinTime = ADAPT_SP12_THRESHOLD_LIMIT;
+            }
+            pfs_Adapt->u32SP2ThresholdMax = lu32_XMinTime + pfs_Adapt->u32SP2ThresholdVal;  //得到小投上限时间
+
+            ls32_InterestWeight = RushWtProbabilityStatistics(pfs_Adapt);  // 对过冲量进行概率统计处理
+            
+            //中投过冲采集点时的重量 = 过冲量+中投截止量
+//            pfs_Adapt->u32SP2ResultWt = ls32_InterestWeight + (*pfs_Adapt->ps32SP2RealWt);
+            //中投加的重量 = 中投过冲采集点时重量 - 小投加的重量（k*t）
+            pfs_Adapt->u32SP2WT = pfs_Adapt->u32SP2ResultWt - (pfs_Adapt->s32SP3KProb * (*pfs_Adapt->pu32ADCntSP3Rush) / 1000);
+            //中投流量 = 中投加的重量 / 中投时间(0.1ms)
+            pfs_Adapt->fSP2Flux = (float)pfs_Adapt->u32SP2WT  / ((float)(*pfs_Adapt->pu32SP2RealTime) * 10);
+            //统计处理中投流量
+            pfs_Adapt->fSP2Flux = SP2FluxProbabilityStatistics(pfs_Adapt, pfs_Adapt->fSP2Flux);
+            
+            pfs_Adapt->s32SP2AdaptSig = 0;  //打印调试输出
+            pfs_Adapt->u32RushWtProb = ls32_InterestWeight + *pfs_Adapt->ps32SP3;; //统计过冲量+小投落差值 打印用
+            if(ls32_InterestWeight != 0)
+            {
+                if((*pfs_Adapt->pu32SP3RealTime < lu32_XMinTime)|| (*pfs_Adapt->pu32SP3RealTime > pfs_Adapt->u32SP2ThresholdMax))
+                {   //小投时间过短或过长 进行修正
+
+                    ls32_Temp = ls32_InterestWeight + *pfs_Adapt->ps32SP3;  //过冲量+小投落差值
+                    
+                    if((*pfs_Adapt->ps32SP2 > ls32_Temp) && (*pfs_Adapt->pu32SP3RealTime > pfs_Adapt->u32SP2ThresholdMax))  // 大于2.2秒，不能增大提前量
+                    {   //设置的中投提前量大于修正量&&慢加时间大于最大门限 减小中投提前量
+                        pfs_Adapt->s32SP2AdaptSig = -1;
+                        //得到过冲点调整量
+                        ls32_Temp = (*pfs_Adapt->ps32SP2 - ls32_Temp);
+                        ls32_Temp = ModifyRushWeight(*pfs_Adapt->ps32SP2 - ls32_Temp, pfs_Adapt);
+                        //中投调整时间(0.1ms) = 过冲点调整量 / 中投流量
+//                        pfs_Adapt->u32SP2Adapt01ms = ls32_Temp / pfs_Adapt->fSP2Flux;
+                        
+                        //中投提前量调整结果 = 调整时间 × 中投线性拟合K(转换成0.1ms单位)
+//                        ls32_Temp = pfs_Adapt->u32SP2Adapt01ms * ((float)pfs_Adapt->s32SP2KProb * AD_SPEED / 10000 /1000);
+//                        ls32_Temp = ModifyRushWeight(ls32_Temp, pfs_Adapt);
+                        
+                        pfs_Adapt->s32SP2AdaptVal = ls32_Temp;  //中投调整值 打印用
+                        
+                        ls32_InterestWeight = *pfs_Adapt->ps32SP2 - ls32_Temp;
+                        if((ls32_InterestWeight > 0) && (ls32_InterestWeight < pfs_Adapt->s32TargetVal))
+                        {
+                            *pfs_Adapt->ps32SP2 = ls32_InterestWeight;
+                        }
+                    }
+                    else if((*pfs_Adapt->ps32SP2 < ls32_Temp) && (*pfs_Adapt->pu32SP3RealTime < lu32_XMinTime)) // 小于1.1秒，不能减小提前量
+                    {   //设置的中投提前量小于修正量&&慢加时间小于最大门限 增大中投提前量
+                        pfs_Adapt->s32SP2AdaptSig = 1;
+                        //得到过冲点调整量
+                        ls32_Temp = (ls32_Temp - *pfs_Adapt->ps32SP2);
+                        ls32_Temp = ModifyRushWeight(ls32_Temp - *pfs_Adapt->ps32SP2, pfs_Adapt);
+                        //中投调整时间(AD次数) = 过冲点调整量 / 中投流量
+//                        pfs_Adapt->u32SP2Adapt01ms = ls32_Temp / pfs_Adapt->fSP2Flux;
+                        //中投提前量调整结果 = 调整时间 × 中投线性拟合K
+//                        ls32_Temp = pfs_Adapt->u32SP2Adapt01ms * ((float)pfs_Adapt->s32SP2KProb * AD_SPEED / 10000 /1000);
+//                        ls32_Temp = ModifyRushWeight(ls32_Temp, pfs_Adapt);
+                        
+                        pfs_Adapt->s32SP2AdaptVal = ls32_Temp;  //中投调整值 打印用
+                        
+                        ls32_InterestWeight = *pfs_Adapt->ps32SP2 + ls32_Temp;
+                        if((ls32_InterestWeight > 0) && (ls32_InterestWeight < pfs_Adapt->s32TargetVal))
+                        {
+                            *pfs_Adapt->ps32SP2 = ls32_InterestWeight;
+                        }
+                    }   
+                    
+                    if(*pfs_Adapt->ps32SP2 > pfs_Adapt->s32TargetVal - 100)      // 上限
+                    {
+                        *pfs_Adapt->ps32SP2 = pfs_Adapt->s32TargetVal - 100;
+                    }
+                    else if(*pfs_Adapt->ps32SP2 < 100)                        // 下限
+                    {
+                        *pfs_Adapt->ps32SP2 = 100;
+                    }
+                    SaveSP2Value(pfs_Adapt);   // 保存到铁电
+                }   
+            }   
+        }
+    }
+    
+    return 1;
+}
+
+/*********************************************************************
+函数名称: ClrPrintMessage
+功    能: 清除打印输出相关用信息
+说    明: 
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-08-25
+修    改:                      时    间: 
+*********************************************************************/
+void ClrPrintMessage(struct_adapt_t *pfs_Adapt)
+{
+    pfs_Adapt->u32RushWtProb = 0;
+    pfs_Adapt->s32SP2AdaptVal = 0;
+    pfs_Adapt->u32SP2Adapt01ms = 0;
+    pfs_Adapt->u32SP3Prob = 0;
+    pfs_Adapt->s32SP3AdaptVal = 0;
+}
+
+/*********************************************************************
+函数名称: Adapt_Process
+功    能: 自适应处理程序
+说    明: 放在加料定值完成后调用
+入口参数: *pfs_Adapt 自适应参数结构体
+出口参数: 
+返 回 值: 1=完成 0=未完成
+设    计: 丛海旭               时    间: 2015-08-19
+修    改:                      时    间: 
+*********************************************************************/
+u32 Adapt_Process(struct_adapt_t *pfs_Adapt)
+{
+    ClrPrintMessage(pfs_Adapt); //清除打印输出信息
+    if(0 != pfs_Adapt->u32AdatpEn)
+    {   //自适应开关打开
+        if(true == pfs_Adapt->bFirstIn) // 第一包不修
+        {
+            pfs_Adapt->bFirstIn = false;
+        }
+        else
+        {
+            Adapt_SP12(pfs_Adapt);  //大中投自适应修正
+            Adapt_SP3(pfs_Adapt);   //小投自适应修正
+        }
+    }
+    else
+    {
+        pfs_Adapt->bFirstIn = true;
+    }
+    
+    return 1;
+}
+
+
+

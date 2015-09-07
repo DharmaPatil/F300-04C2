@@ -1,0 +1,93 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000         ;/******************************************************
+                       ***********************/
+    2 00000000         ;/* SWI.S: SWI Handler                                  
+                                             */
+    3 00000000         ;/******************************************************
+                       ***********************/
+    4 00000000         ;/* This file is part of the uVision/ARM development too
+                       ls.                   */
+    5 00000000         ;/* Copyright (c) 2005-2006 Keil Software. All rights re
+                       served.               */
+    6 00000000         ;/* This software may only be used under the terms of a 
+                       valid, current,       */
+    7 00000000         ;/* end user licence from KEIL for a compatible version 
+                       of KEIL software      */
+    8 00000000         ;/* development tools. Nothing else gives you the right 
+                       to use this software. */
+    9 00000000         ;/******************************************************
+                       ***********************/
+   10 00000000         
+   11 00000000         
+   12 00000000                 AREA             SWI, CODE, READONLY
+   13 00000000                 ARM
+   14 00000000         
+   15 00000000                 PRESERVE8
+   16 00000000                 ALIGN
+   17 00000000                 IMPORT           SWI_Handler
+   18 00000000                 EXPORT           SWIHandler
+   19 00000000         
+   20 00000000         SWIHandler
+   21 00000000 E92D5FFF        STMFD            SP!, {R0-R12, LR} ; Save Worksp
+                                                            ace & LR to Stack
+   22 00000004 E14F0000        MRS              R0, SPSR    ; Copy SPSR to R0
+   23 00000008 E92D0003        STMFD            SP!, {R0, R1} ; Save SPSR to St
+                                                            ack (8-byte)
+   24 0000000C EBFFFFFE        BL               SWI_Handler ; Branch to SWI Han
+                                                            dler
+   25 00000010 E8BD0003        LDMFD            SP!, {R0, R1} ; Restore SPSR to
+                                                             R0
+   26 00000014 E16FF000        MSR              SPSR_cxsf, R0 ; Restore SPSR
+   27 00000018 E8FD9FFF        LDMFD            SP!, {R0-R12, PC}^ ; Return to 
+                                                            program after
+   28 0000001C         ; SWI Instruction
+   29 0000001C         
+   30 0000001C                 END
+Command Line: --debug --xref --apcs=interwork --depend=.\output\swi.d -o.\outpu
+t\swi.o -Id:\Keil_v5\ARM\RV31\INC -Id:\Keil_v5\ARM\CMSIS\Include -Id:\Keil_v5\A
+RM\Inc\ST\71x --predefine="__UVISION_VERSION SETA 513" --list=.\swi.lst ..\str7
+1x\ASM\SWI.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+SWI 00000000
+
+Symbol: SWI
+   Definitions
+      At line 12 in file ..\str71x\ASM\SWI.s
+   Uses
+      None
+Comment: SWI unused
+SWIHandler 00000000
+
+Symbol: SWIHandler
+   Definitions
+      At line 20 in file ..\str71x\ASM\SWI.s
+   Uses
+      At line 18 in file ..\str71x\ASM\SWI.s
+Comment: SWIHandler used once
+2 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+External symbols
+
+SWI_Handler 00000000
+
+Symbol: SWI_Handler
+   Definitions
+      At line 17 in file ..\str71x\ASM\SWI.s
+   Uses
+      At line 24 in file ..\str71x\ASM\SWI.s
+Comment: SWI_Handler used once
+1 symbol
+334 symbols in table

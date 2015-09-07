@@ -1,0 +1,39 @@
+#ifndef _ADTOWEIGHT_H
+#define _ADTOWEIGHT_H
+
+#include "71x_type.h"
+
+
+extern u32  gu32_AdFedValue;       //AD数据进行滤波后得到的数据
+extern u32  gu32_NetAdFedValue;    //减去标定零点的AD码
+extern bool gb_NetAdFlg;           //减去标定零点的AD码符号位
+extern u32  gu32_Nquad;            //4倍分度数
+extern bool gb_SigNquadFlg;        //4倍分度数的符号位
+extern u32  gu32_FloatZero;        //浮动零点
+extern bool gb_SigFZeroFlg;        //浮动零点符号
+extern u32  gu32_N;                //分度数
+extern u32  gu32_Wt;               //重量
+extern bool gb_StabFlg;        //稳定
+extern bool gb_MvStabFlg;      //毫伏数稳定
+extern bool gb_PowerOnZeroFlg;     //上电自动清零
+extern bool gb_ZeroKeyFlg;         //按清零键
+extern bool gb_ForceClrZeroFlg;    //强制清零标志位 如清零间隔到但是判稳超时
+extern bool gb_AlarmFlg;       //报警标志
+extern bool gb_ZeroPosition;   //零位标志
+extern bool gb_NzFlg;          //零区标志
+extern bool gb_DispNetFlg;         //显示净重标志位
+extern bool gb_NetSigFlg;          //净重符号
+extern u32 gu32_TareNquad;        //皮重值的4倍分度数
+extern bool gb_TareSigFlg;         //皮重符号
+
+#ifdef DEBUG_WT_SEND
+u32 gu32_WtNotFed;          //没有滤波的AD码转换成的重量
+bool gb_SigWtNotFedFlg;     //没有滤波的AD码转换成的重量的符号
+#endif
+
+
+extern void GetWt(void);
+
+#endif
+
+

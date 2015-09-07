@@ -1,0 +1,1334 @@
+/*
+Description:            显示和按键相关函数处理
+Author:                 丛海旭
+Date:                   2013-12-9
+*/
+
+
+#include "include.h"
+
+//GM8804C-2_ARM标准版版本号
+
+/*  
+v1.00 丛海旭 2014-5-30
+1.  第一个标准版本
+
+v1.01 丛海旭 2014-7-9
+2.  增加快捷标定零点功能。
+3.  Modbus通讯增加增益校准的地址。
+4.  Modbus线圈地址0079修改为串行口1自动打印开关。
+5.  显示刷新间隔调整为30ms。
+6.  Cont连续方式发送间隔调整为不低于10ms。
+7.  修正显示OFL时，不能标定零点的问题。
+8.  修正Modbus打印所有配方累计后，再打印总累计会打印多条数据的问题。
+9.  停止状态下查看累计数据时，为了显示的清晰简洁，只有SUM指示灯亮，代表目前处于查看累计状态。运行时查看累计时不做特殊处理，其他指示灯也会亮。
+10. 无斗模式夹袋后，只要没有开始加料，就可以松袋。
+11. 修正无斗模式运行中修改目标值，下一秤不刷新的问题。
+12. 修正RS485总线Modbus ASCII方式通讯时偶尔出现中断的问题。
+13. 修正Modbus RTU正常通讯过程中，更改仪表通讯方式选项，偶尔会出现的死机问题。
+14. 快速标定标定完零点和增益后直接退出，不进入密码修改界面。
+15. VFD显示实时初始化。
+
+v1.02   丛海旭  2014-10-30
+1.	标定运算采用float类型，提高标定时的准确度。
+2.	修正累计查询密码打开，运行时按6键查询累计时不出现密码输入界面的问题。
+3.	查看累计时按PRINT键打印，如果没有串口设置为打印功能应该报警ERR10，而不是ERR09。
+4.	优化打印函数处理。
+5.	增加双无斗秤互锁模式。
+6.	增加PROFIBUS-DP通讯的支持，提供两个GSD文件选择，其中一个兼容旧单片机版本DP通讯。
+7.	增加read-o命令方式通讯，兼容非常老的4位累计次数的通讯格式。
+8.	增加开关量输入“标定锁”功能。
+
+
+
+*/
+#define VERSION     "103"
+#define MODEL       "8804C2"
+
+
+u32 gu32_KeyCode;           //按键值
+u32 gu32_FlashDelay;        //闪烁延时
+u8 gu8_DataInLength;       //数据输入长度
+bool gb_SetFlg;          //SET按键标志
+bool gb_FirstNumKeyFlg;   //第一次按键清零标志
+u8 gu8_DispErrorNumber;         //错误号
+//u8 gu8_DispErrorNumberBackup;   //错误号备份
+bool gb_DispErrorFlg;
+bool gb_HandClrErrorFlg;
+u32 gu32_DispErrorTime;
+u32 gu32_ErrTimeDelay;
+bool gb_FlashFlg;       //闪烁标志位
+
+
+
+/*********************************************************************
+函数名称: void Disp_FlgLight(void)
+功    能: 标志灯显示
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-1-7
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_FlgLight(void)
+{
+    VFD_FlgDisp_ZERO(gb_ZeroPosition);
+    VFD_FlgDisp_STAB(gb_StabFlg);
+    if (gb_EndFlg)  //停止输入有效后run指示灯闪烁
+        VFD_FlgDisp_RUN(Flash_Flg(gb_RunFlg));
+    else
+        VFD_FlgDisp_RUN(gb_RunFlg);
+    VFD_FlgDisp_SUM(gb_SumFlg);
+    VFD_FlgDisp_OVER(gb_OverFlg || gb_OUOverFlg);
+    VFD_FlgDisp_UNDER(gb_UnderFlg || gb_OUUnderFlg);
+    //有斗模式&&运行&&定义了卸料关门到位信号&&卸料关门到位信号无效  那么如果加料时则加料指示灯闪烁
+    //无斗模式&&运行&&定义了夹袋到位信号&&夹袋到位信号无效  那么如果加料时则加料指示灯闪烁
+    if (((gs_Setup.TareMode == BINYES || gs_Setup.TareMode == BIN2_A || gs_Setup.TareMode == BIN2_B) && gb_RunFlg && gb_EnDiscCloseOKFlg && (!gb_DiscCloseOKFlg))
+     || ((gs_Setup.TareMode == BINNO || gs_Setup.TareMode == NO2_A || gs_Setup.TareMode == NO2_B) && gb_RunFlg  && gb_EnPackOKFlg && (!gb_PackOKFlg)))
+    {
+        VFD_FlgDisp_SP1(Flash_Flg(Feed_SP(SP1_STATE)));
+        VFD_FlgDisp_SP2(Flash_Flg(Feed_SP(SP2_STATE)));
+        VFD_FlgDisp_SP3(Flash_Flg(Feed_SP(SP3_STATE)));
+    }
+    else
+    {
+        VFD_FlgDisp_SP1(Feed_SP(SP1_STATE));
+        VFD_FlgDisp_SP2(Feed_SP(SP2_STATE));
+        VFD_FlgDisp_SP3(Feed_SP(SP3_STATE));
+    }
+    //有斗模式&&运行&&定义了夹袋到位信号&&夹袋到位信号无效  那么如果卸料时则卸料指示灯闪烁
+    if ((gs_Setup.TareMode == BINYES || gs_Setup.TareMode == BIN2_A || gs_Setup.TareMode == BIN2_B) && gb_RunFlg  && gb_EnPackOKFlg && (!gb_PackOKFlg))
+        VFD_FlgDisp_DISC(Flash_Flg(gb_DiscFlg));
+    else
+        VFD_FlgDisp_DISC(gb_DiscFlg);
+    VFD_FlgDisp_NZ(gb_NzFlg);
+    VFD_FlgDisp_FILL(gb_FillFlg);
+    if (gu8_ExtType == PBUS_UART)   //连接了PROFIBUS扩展板
+    {
+        VFD_FlgDisp_HILIM(Pbus_InitFail());       //PROFIBUS初始化失败
+        VFD_FlgDisp_HI(Pbus_NotLinked());          //PROFIBUS总线未连接
+    }
+    VFD_FlgDisp_GO(gb_GoFlg);
+    VFD_FlgDisp_LO(gb_LowDefineFlg && (!gb_LowFlg));    //下料位有定义但是输入无效
+    VFD_FlgDisp_LOLIM(gb_FlapBagOutFlg || gb_FlapAllHighFlg);   //拍袋指示
+    VFD_FlgDisp_HOLD(gb_CompFlg);   //定值指示
+}
+
+/*********************************************************************
+函数名称: u8 monthfromname(u8 name[])
+功    能: 从月份名称获得月份值.如果返回 0,错误
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-1-7
+修    改:                      时    间: 
+*********************************************************************/
+u8 monthfromname(u8 name[])
+{
+    const u8 monthname[13][3]=
+    {
+     {0,0,0},
+     {'J','a','n'},{'F','e','b'},{'M','a','r'},{'A','p','r'},
+     {'M','a','y'},{'J','u','n'},{'J','u','l'},{'A','u','g'},
+     {'S','e','p'},{'O','c','t'},{'N','o','v'},{'D','e','c'}
+    };//月份名称
+    u8 i,j;
+    for(i=1;i<=12;i++)
+    {
+        for(j=0;j<3;j++)
+        {
+            if(name[j]!=monthname[i][j])
+                break;
+            if(j==2)
+                return(i);
+        }
+    }
+    return(0);
+}
+
+/*********************************************************************
+函数名称: void Disp_VersionType(u8 fu8_Type)
+功    能: 显示版本号或程序修改时间或随机ID号
+说    明: 
+入口参数: 0版本号 1程序修改时间 2随机ID号
+返 回 值: 
+设    计: 丛海旭               时    间: 
+修    改:                      时    间: 
+*********************************************************************/
+/*显示当前编译时间日期 
+unsigned char code DataStr[]=__DATE__; 
+unsigned char code TimeStr[]=__TIME__; 
+格式 
+DataStr[]=[][][]空格[][]空格[][][][]; 
+          月的英文  日   年 
+如2004/10/06显示为43 63 74 20 30 36 20 32 30 30 34 即oct 06 2004 
+1= Jan 2= Feb 3= Mar 4=Apr 5=May 6 =Jun 7=Jul 8=Aug 9=Sep 10=Oct 11=Nov 12=Dec  
+
+TimeStr[]=[][]:[][]:[][]; 时:分:秒 
+如10:31:26显示为31 30 3a 33 31 3a 32 36*/
+void Disp_VersionType(u8 fu8_Type)
+{
+    u8 lu8_Date[] = __DATE__;
+    u8 lu8_Time[] = __TIME__;
+    u8 lu8_Month;
+    
+    VFD_ClrDispRam(gu32_ModelSetSwitch, gu32_ModelArry[0]);       //清显示缓存
+    switch(fu8_Type)
+    {
+        case 0:     //型号版本号
+            if (gu32_ModelSetSwitch)    //型号自定义功能打开
+            {
+                gu8_MainDispArray[0] = Value_To_SEG[gu32_ModelArry[1]];
+                gu8_MainDispArray[1] = Value_To_SEG[gu32_ModelArry[2]];
+                gu8_MainDispArray[2] = Value_To_SEG[gu32_ModelArry[3]];
+                gu8_MainDispArray[3] = Value_To_SEG[gu32_ModelArry[4]];
+                gu8_MainDispArray[4] = Value_To_SEG[gu32_ModelArry[5]];
+                gu8_MainDispArray[5] = Value_To_SEG[gu32_ModelArry[6]];
+                VFD_AuxDisp_Str(VERSION);   //版本号
+                gu8_AuxDispArray[0] |= 0x80;    //ARM版本04C2版本号带小数点，用来区别单片机版本
+            }
+            else
+            {
+                VFD_MainDisp_Str(MODEL);    //型号
+                VFD_AuxDisp_Str(VERSION);   //版本号
+                gu8_AuxDispArray[0] |= 0x80;    //ARM版本04C2版本号带小数点，用来区别单片机版本
+            }
+            break;
+        case 1:     //程序日期
+            lu8_Month = monthfromname(lu8_Date);
+            
+            gu8_MainDispArray[0] = Value_To_SEG[lu8_Date[9] & 0x0F];
+            gu8_MainDispArray[1] = Value_To_SEG[lu8_Date[10] & 0x0F] | 0x80;
+            gu8_MainDispArray[2] = Value_To_SEG[lu8_Month/10];
+            gu8_MainDispArray[3] = Value_To_SEG[lu8_Month%10] | 0x80;
+            gu8_MainDispArray[4] = Value_To_SEG[lu8_Date[4] & 0x0F];
+            gu8_MainDispArray[5] = Value_To_SEG[lu8_Date[5] & 0x0F];
+            VFD_AuxDisp_Str("DA ");
+            break;
+        case 2:     //程序时间
+            gu8_MainDispArray[0] = Value_To_SEG[lu8_Time[0] & 0x0F];       
+            gu8_MainDispArray[1] = Value_To_SEG[lu8_Time[1] & 0x0F] | 0x80;
+            gu8_MainDispArray[2] = Value_To_SEG[lu8_Time[3] & 0x0F];       
+            gu8_MainDispArray[3] = Value_To_SEG[lu8_Time[4] & 0x0F] | 0x80;       
+            gu8_MainDispArray[4] = Value_To_SEG[lu8_Time[6] & 0x0F];       
+            gu8_MainDispArray[5] = Value_To_SEG[lu8_Time[7] & 0x0F];       
+            VFD_AuxDisp_Str("CL ");
+            break;
+        case 3:
+            if (gu32_GetedRandom != 0x55 || gu32_RandomID == 0 || gu32_RandomID >= 1000000)
+            {
+                do
+                {
+                    gu32_RandomID = GetRandom();
+                }while(GradeShutCodeEQ());
+                
+                gu32_GetedRandom = 0x55;
+                FRAM_WriteDW(FMAddr_GetedRandom, gu32_GetedRandom);
+                FRAM_WriteDW(FMAddr_RandomID, gu32_RandomID);
+                UpdataGrandShutCode();      //更新密码
+            }
+            VFD_MainDisp_u32(gu32_RandomID);
+            VFD_AuxDisp_Str("ID ");
+            break;
+        case 4:     //客户代码
+            Disp_Main_Data(gu32_BuyerID, 0, 2, false, false);       //显示
+            VFD_AuxDisp_Str("BUY");
+            break;
+        default:
+            break;
+    }
+    VFD_CopyDispArryToDispRam();
+    VFD_WriteDispRamArry();
+}
+
+/*********************************************************************
+函数名称: void Disp_Version(void)
+功    能: 显示型号和版本号
+说    明: 包括查看程序日期和程序
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-11
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Version(void)
+{
+    u32 lu32_TimeBuf;
+    u8  lu8_DispType = 0;
+    
+    Disp_VersionType(lu8_DispType);
+    lu32_TimeBuf = gu32_Sys10ms;
+    //显示版本号时按4号键切换程序时间和随机ID号显示
+    while(gu32_Sys10ms - lu32_TimeBuf < 200)
+    {
+        OPBuzzer();
+        gu32_KeyCode = Key_Deal();      //读按键
+        if (gu32_KeyCode == K_SET)
+        {
+            gu32_SystemState = MODELSETSTATE;
+            ModelSet();      //型号设置
+            gb_FlashFlg = false;
+            Disp_VersionType(lu8_DispType);
+            lu32_TimeBuf = gu32_Sys10ms;
+        }
+        else if (gu32_KeyCode == K_5)
+        {
+            if ((++lu8_DispType) >= 5)
+                lu8_DispType = 0;
+            Disp_VersionType(lu8_DispType);
+            lu32_TimeBuf = gu32_Sys10ms;
+        }
+        else if (gu32_KeyCode != K_NONE)         //按其他按键返回到版本号显示
+        {
+            if (lu8_DispType != 0)
+            {
+               lu8_DispType = 0;
+               Disp_VersionType(lu8_DispType);
+               lu32_TimeBuf = gu32_Sys10ms;
+            }
+        }
+        //未加入AD转换和AD初始化不成功的处理
+        if (lu8_DispType != 0)
+            lu32_TimeBuf = gu32_Sys10ms;
+    }
+    
+    if (gs_Setup.PowerOnZeroSwitch != 0)     //上电自动清零开关打开，置上电清零标志位
+        gb_PowerOnZeroFlg = true;
+}
+
+/*********************************************************************
+函数名称: u32 Key_Deal(void)
+功    能: 返回按键值
+说    明: 包括按键去抖等处理
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-11
+修    改:                      时    间: 
+*********************************************************************/
+u32 Key_Deal(void)
+{
+    static u32 KeyPushedTime;
+    static u32 u32PreKey=K_NONE;
+    static u32 u32AnsedKey=K_NONE;
+    static u32 su32_LongKey = K_NONE;
+    u32 lu32_Key = 0;
+    u32 uicKey;
+    
+    uicKey = VFD_ReadKey();
+    
+    if ((gb_KeyLockFlg == false && gb_MbKeyLockFlg == false) || uicKey == K_ZERO || uicKey == K_ESC || uicKey == K_NONE)
+    {
+        if(uicKey!=u32PreKey){//本次扫描到和上次扫描到不同,去抖不响应
+            u32PreKey=uicKey;
+            lu32_Key=K_NONE;
+            KeyPushedTime=gu32_Sys10ms;
+            return K_NONE;
+        }
+        else
+        {                  //连续两次扫描到相同,才确认一次按下
+            u32PreKey=uicKey;
+            if(uicKey!= u32AnsedKey)
+            {//本次按下的不是原来按下的,立即响应
+                lu32_Key=uicKey;
+                u32AnsedKey=lu32_Key;
+                KeyPushedTime=gu32_Sys10ms;
+                su32_LongKey = lu32_Key;
+    
+                //按键蜂鸣
+                if(uicKey!=K_NONE)
+                {
+                    BuzzerStart(5);
+                    //按键重新复制闪烁时间变量，实现闪烁时，按键后熄灭的数字要亮起来
+                    gu32_FlashDelay = gu32_Sys10ms;
+                }
+            }
+            else
+            {//本次按下的和上次响应的相同
+                if (gu32_Sys10ms - KeyPushedTime > 500 && uicKey != K_NONE)
+                {//500*10 = 5s 长按5s以上
+                    lu32_Key=(uicKey|K_5S);
+//                    u32AnsedKey=lu32_Key;
+                    //5s后短响一次
+                    if(uicKey!=K_NONE && su32_LongKey != lu32_Key)
+                    {
+                        BuzzerStart(1);
+                        //按数字键重新复制闪烁时间变量，实现闪烁时，按键后熄灭的数字要亮起来
+                        gu32_FlashDelay = gu32_Sys10ms;
+                    }
+                    su32_LongKey = lu32_Key;
+                }
+                else if(gu32_Sys10ms-KeyPushedTime>200 && uicKey != K_NONE)
+                {//200*10=2s 长按2秒以上
+                    lu32_Key=(uicKey|K_2S);
+//                    u32AnsedKey=lu32_Key;
+                    //2s后短响一次
+                    if(uicKey!=K_NONE && su32_LongKey != lu32_Key)
+                    {
+                        BuzzerStart(1);
+                        //按数字键重新复制闪烁时间变量，实现闪烁时，按键后熄灭的数字要亮起来
+                        gu32_FlashDelay = gu32_Sys10ms;
+                    }
+                    su32_LongKey = lu32_Key;
+                }
+                else
+                {//连续按键但间隔未到 不响应
+                    lu32_Key=K_NONE;
+                }
+            }//end:本次按下的和上次响应的相同
+        }
+    }
+    return lu32_Key;
+}
+
+/*********************************************************************
+函数名称: void Disp_Echo0(u32 lul_Point, u8 *fucp_DataArry, u8 i)
+功    能: 消隐显示数组
+说    明: 
+入口参数: lul_Point = 小数位数
+          *fucp_DataArry = 显示数组首地址
+          i 显示数组的个数
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Echo0(u32 lul_Point, u8 *fucp_DataArry, u8 j)
+{
+    u8 i;
+    
+    for (i = 0; i < j - 1 - lul_Point; i++)
+    {
+        if (fucp_DataArry[i] == SEG_0)
+            fucp_DataArry[i] = SEG_BLK;
+        else
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_Main_Data(u32 ful_MainDispVal, u32 lul_Point, u8 fuc_DispNumber, bool fb_Echo0, bool fb_Ofl)
+功    能: 主显示数据
+说    明: 
+入口参数: 
+          ful_MainDispVal = 显示的数据值
+          lul_Point = 小数点位数
+          fuc_DispNumber = 显示数据的位数,必须当fb_Echo0 = false时该变量才起作用
+          fuc_Echo0 = 1消隐 0不消隐
+          fb_Ofl = 1 OFL
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Main_Data(u32 ful_MainDispVal, u32 lul_Point, u8 fuc_DispNumber, bool fb_Echo0, bool fb_Ofl)
+{
+    u8 i;
+
+    if (fb_Ofl == true)                //显示溢出
+    {
+        if (gb_AdOflFlg)    //ad溢出显示LOFL
+            VFD_MainDisp_Str("  LOFL");
+        else
+            VFD_MainDisp_Str("   OFL");
+    }
+    else
+    {
+        
+        ful_MainDispVal %= 1000000;    //不允许大于6位数据的转换
+        BIN4toNBCD(ful_MainDispVal, gu8_MainDispArray, 6);
+        for (i = 0; i < 6; i++)         //将数值转换成显示译码
+            gu8_MainDispArray[i] = Value_To_SEG[gu8_MainDispArray[i]];
+            
+        if (lul_Point != 0)             //小数点显示
+            gu8_MainDispArray[5-lul_Point] |= 0x80;
+    }
+    
+    if (fb_Echo0 == true && gb_FlashFlg == false)   //闪烁时不消隐
+        Disp_Echo0(lul_Point, gu8_MainDispArray, 6);
+    else              //不消隐时，显示位数起作用
+    {
+        for (i = 0; i < 6 - fuc_DispNumber; i++)
+            gu8_MainDispArray[i] = SEG_BLK;
+    }
+    VFD_CopyDispArryToDispRam();
+}
+
+/*********************************************************************
+函数名称: void Disp_Aux_Rec(u32 fu32_Num)
+功    能: 副显示配方号
+说    明: 
+入口参数: fu32_Num：显示的配方号
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-25
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Aux_Rec(u32 fu32_Num)
+{
+    gu8_AuxDispArray[0] = SEG_R;
+    gu8_AuxDispArray[1] = Value_To_SEG[fu32_Num%100/10];
+    gu8_AuxDispArray[2] = Value_To_SEG[fu32_Num%10];
+}
+
+/*********************************************************************
+函数名称: u32 Key_T9Input(u32 ful_Value)
+功    能: T9输入法输入数字和字母支持
+说    明: 
+入口参数: ful_Value = 数据值
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-1-2
+修    改:                      时    间: 
+*********************************************************************/
+u32 Key_T9Input(u32 ful_Value)
+{
+  /*T9输入法每个按键对应的数字和字母
+    1 - 1
+    2 - 2 a b c
+    3 - 3 d e f
+    4 - 4 g h i
+    5 - 5 j k l
+    6 - 6 m n o
+    7 - 7 p q r s
+    8 - 8 t u v
+    9 - 9 w x y z
+    0 - 0 blank  
+    返回值0~36分别对应0~9 a~z和blank
+    */
+    const u32 cu32_T9_1[] = {1};
+    const u32 cu32_T9_2[] = {2, 10, 11, 12};
+    const u32 cu32_T9_3[] = {3, 13, 14, 15};
+    const u32 cu32_T9_4[] = {4, 16, 17, 18};
+    const u32 cu32_T9_5[] = {5, 19, 20, 21};
+    const u32 cu32_T9_6[] = {6, 22, 23, 24};
+    const u32 cu32_T9_7[] = {7, 25, 26, 27, 28};
+    const u32 cu32_T9_8[] = {8, 29, 30, 31};
+    const u32 cu32_T9_9[] = {9, 32, 33, 34, 35};
+    const u32 cu32_T9_0[] = {0, 36};
+    
+    static u8 su8_PressCnt = 0;
+    static u16 su16_KeyCodeOld;
+    
+    if (gu32_KeyCode != K_NONE)
+    {
+        if (su16_KeyCodeOld != gu32_KeyCode)
+        {
+            su16_KeyCodeOld = gu32_KeyCode;
+            su8_PressCnt = 0;
+        }
+    }
+    
+    switch (gu32_KeyCode)
+    {
+        case K_1:
+            su8_PressCnt = 0;
+            ful_Value = cu32_T9_1[su8_PressCnt];
+            break;
+        case K_2:
+            ful_Value = cu32_T9_2[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_3:
+            ful_Value = cu32_T9_3[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_4:
+            ful_Value = cu32_T9_4[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_5:
+            ful_Value = cu32_T9_5[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_6:
+            ful_Value = cu32_T9_6[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_7:
+            ful_Value = cu32_T9_7[su8_PressCnt++];
+            if (su8_PressCnt > 4)
+                su8_PressCnt = 0;
+            break;
+        case K_8:
+            ful_Value = cu32_T9_8[su8_PressCnt++];
+            if (su8_PressCnt > 3)
+                su8_PressCnt = 0;
+            break;
+        case K_9:
+            ful_Value = cu32_T9_9[su8_PressCnt++];
+            if (su8_PressCnt > 4)
+                su8_PressCnt = 0;
+            break;
+        case K_0:
+            ful_Value = cu32_T9_0[su8_PressCnt++];
+            if (su8_PressCnt > 1)
+                su8_PressCnt = 0;
+            break;
+        case K_NONE:
+            break;
+        default:
+            break;
+    }
+    return ful_Value;
+}
+
+/*********************************************************************
+函数名称: u32 Key_NumInput(u32 ful_Value, u8 fuc_Len)
+功    能: 数据输入处理函数
+说    明: 此处是用键盘的数字键进行数据的输入，fuc_Len == 0时此函数返回原参数值
+入口参数: ful_Value = 输入的数据值， fuc_Len = 数据位数
+返 回 值: 返回输入后的数据值
+设    计: 丛海旭               时    间: 2011-1-4
+修    改:                      时    间: 
+*********************************************************************/
+u32 Key_NumInput(u32 ful_Value, u8 fuc_Len)
+{
+#define FirstNumKeyDeal(); if(gb_FirstNumKeyFlg == true) {gb_FirstNumKeyFlg=false;lul_Result=0;gu8_DataInLength=0;}
+
+    bool lb_Flg = false;
+    u8 i;
+    u32 lul_Result = 1;
+    
+    if (fuc_Len == 0)
+        return ful_Value;
+    for (i=0; i < fuc_Len - 1; i++)
+        lul_Result *= 10;
+    lul_Result = ful_Value % lul_Result;
+    lul_Result *= 10;
+    
+    switch (gu32_KeyCode)
+    {
+        case K_1:
+            FirstNumKeyDeal();
+            lul_Result+=1;
+            break;
+        case K_2:
+            FirstNumKeyDeal();
+            lul_Result+=2;
+            break;
+        case K_3:
+            FirstNumKeyDeal();
+            lul_Result+=3;
+            break;
+        case K_4:
+            FirstNumKeyDeal();
+            lul_Result+=4;
+            break;
+        case K_5:
+            FirstNumKeyDeal();
+            lul_Result+=5;
+            break;
+        case K_6:
+            FirstNumKeyDeal();
+            lul_Result+=6;
+            break;
+        case K_7:
+            FirstNumKeyDeal();
+            lul_Result+=7;
+            break;
+        case K_8:
+            FirstNumKeyDeal();
+            lul_Result+=8;
+            break;
+        case K_9:
+            FirstNumKeyDeal();
+            lul_Result+=9;
+            break;
+        case K_0:
+            FirstNumKeyDeal();
+            lul_Result+=0;
+            break;
+        case K_ZERO:
+            lul_Result=0;
+            lb_Flg = true;
+            gu8_DataInLength = 0;
+            break;
+        default:
+            lul_Result = ful_Value;
+            lb_Flg = true;
+            break;
+    }
+    if (lb_Flg == 0)            //如果按的是数字键则计算输入的数据位数
+    {
+        if (++gu8_DataInLength >= 8)    //密码输入长度判断使用，普通密码6位，锁机7位，所以最大8足够
+            gu8_DataInLength = 8;
+    }
+    
+    return lul_Result;
+}
+
+/*********************************************************************
+函数名称: u32 Key_IncInput(u32 ful_Value, u8 fuc_Min, u8 fuc_Max)
+功    能: ↑键的数据输入处理
+说    明: 
+入口参数: ful_Value = 数据值 fuc_Min = 最小值 fuc_Max = 最大值
+返 回 值: 
+设    计: 丛海旭               时    间: 2011-2-17
+修    改:                      时    间: 
+*********************************************************************/
+u32 Key_IncInput(u32 ful_Value, u8 fuc_Min, u8 fuc_Max)
+{
+    if(gu32_KeyCode == K_INC)
+    {
+        ful_Value++;
+        if (ful_Value > fuc_Max)
+            ful_Value = fuc_Min;
+    }
+    return ful_Value;
+}
+
+/*********************************************************************
+函数名称: void ErrorDeal(u8 fuc_Number, u32 ful_Time)
+功    能: 错误报警的相关处理
+说    明: 
+入口参数: fuc_Number 错误号  为0时无错误号
+          ful_Time 显示错误持续的时间（单位为10ms）  为0时一直显示
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void ErrorDeal(u8 fuc_Number, u32 ful_Time)
+{
+    gb_DispErrorFlg = true;            //显示错误标志位
+
+//    if (fuc_Number == 0)
+//    {
+        //如果之前错误号不为0，那么备份原有错误号，防止报新错误号退出后，原来的错误号变化
+        //比如报警error1，进入参数设置报警error后再退出error1变成了error
+//        if (gu8_DispErrorNumber != 0)
+//        {
+//            gu8_DispErrorNumberBackup = gu8_DispErrorNumber;
+//            gu8_DispErrorNumber = fuc_Number;
+//        }
+//        else
+            gu8_DispErrorNumber = fuc_Number;
+//    }
+//    else
+//    {
+//        if (gu8_DispErrorNumber != SEG_BLK)
+//        {
+//            gu8_DispErrorNumberBackup = gu8_DispErrorNumber;
+//            gu8_DispErrorNumber = Value_To_SEG[fuc_Number];       //得到错误号的显示值
+//        }
+//        else
+//            gu8_DispErrorNumber = Value_To_SEG[fuc_Number];       //得到错误号的显示值
+//    }
+    
+    if (ful_Time == 0)
+        gb_HandClrErrorFlg = true;     //错误需手动清除标志位
+    else
+    {
+        gb_HandClrErrorFlg = false;
+        gu32_DispErrorTime = ful_Time;           //错误号显示持续时间
+        gu32_ErrTimeDelay = gu32_Sys10ms;            //保存当前时间
+        BuzzerStart(50);
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_Error(void)
+功    能: 显示错误报警信息处理
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Error(void)
+{
+    if (gb_HandClrErrorFlg == false)            //不需要手动清除的error报警，显示对应gu32_DispErrorTime时间
+    {
+        if (gu32_Sys10ms - gu32_ErrTimeDelay >= gu32_DispErrorTime)
+        {
+            gb_DispErrorFlg = false;
+            if (gb_AlarmFlg)
+            {
+                gb_AlarmFlg = false;
+            }
+            
+//            //如果之前错误号备份有数据说明之前有错误显示没有清除，重新恢复原有的错误号显示
+//            if (gu8_DispErrorNumberBackup != 0)
+//            {
+//                gu8_DispErrorNumber = gu8_DispErrorNumberBackup;
+//                gu8_DispErrorNumberBackup = 0;
+//            }
+//            else
+                gu8_DispErrorNumber = 0;
+        }
+    }
+    
+    gu8_MainDispArray[0] = SEG_E;
+    gu8_MainDispArray[1] = SEG_r;
+    gu8_MainDispArray[2] = SEG_r;
+    if (gu8_DispErrorNumber == 0)
+    {
+        gu8_MainDispArray[3] = SEG_o;
+        gu8_MainDispArray[4] = SEG_r;
+        gu8_MainDispArray[5] = SEG_BLK;
+    }
+    else
+    {
+        gu8_MainDispArray[3] = SEG_BLK;
+        gu8_MainDispArray[4] = Value_To_SEG[gu8_DispErrorNumber%100/10];
+        gu8_MainDispArray[5] = Value_To_SEG[gu8_DispErrorNumber%10];
+    }
+}
+
+/*********************************************************************
+函数名称: void Flash_MainDisp(u8 fuc_Postion)
+功    能: 主显示闪烁
+说    明: fuc_Postion^0~fuc_Postion^5分别代表显示的最低位到最高位6位数，1代表闪烁
+入口参数: fuc_Position = 闪烁位
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void Flash_MainDisp(u8 fuc_Postion)
+{
+    u8 i;
+    
+    if (gb_FlashFlg == true)
+    {
+        if(gu32_Sys10ms - gu32_FlashDelay > 45)
+        {
+            for (i = 0; i <= 5; i++)
+            {
+                if (fuc_Postion&0x20 >> i)
+                    gu8_MainDispArray[i] = SEG_BLK;
+            }
+            
+            if(gu32_Sys10ms - gu32_FlashDelay > 90)
+            {
+                gu32_FlashDelay = gu32_Sys10ms;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: bool Flash_Flg(bool fb_State)
+功    能: 标志位闪烁
+说    明: 用在指示灯闪烁处理
+入口参数: fb_State 有效时才启动返回值的闪烁
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-2-12
+修    改:                      时    间: 
+*********************************************************************/
+bool Flash_Flg(bool fb_State)
+{
+    bool lb_Result;
+    static u32 su32_FlashDelay = 0;
+    
+    if (fb_State == true)
+    {
+        if(gu32_Sys10ms - su32_FlashDelay > 40)
+        {
+            lb_Result = false;
+            if(gu32_Sys10ms - su32_FlashDelay > 80)
+            {
+                su32_FlashDelay = gu32_Sys10ms;
+                lb_Result = true;
+            }
+        }
+        else
+            lb_Result = true;
+    }
+    else
+        lb_Result = false;
+        
+    return lb_Result;
+}
+
+/*********************************************************************
+函数名称: void Flash_AuxDisp(u8 fuc_Postion)
+功    能: 副显示闪烁
+说    明: fuc_Postion^0~fuc_Postion^5分别代表显示的最低位到最高位6位数，1代表闪烁
+入口参数: fuc_Position = 闪烁位
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-25
+修    改:                      时    间: 
+*********************************************************************/
+void Flash_AuxDisp(u8 fuc_Postion)
+{
+    u8 i;
+    
+    if (gb_FlashFlg == true)
+    {
+        if(gu32_Sys10ms - gu32_FlashDelay > 45)
+        {
+            for (i = 0; i <= 2; i++)
+            {
+                if (fuc_Postion&0x04 >> i)
+                    gu8_AuxDispArray[i] = SEG_BLK;
+            }
+            
+            if(gu32_Sys10ms - gu32_FlashDelay > 90)
+            {
+                gu32_FlashDelay = gu32_Sys10ms;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_InputCode(void)
+功    能: 密码输入显示
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-12
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_InputCode(void)
+{
+    u8 i,j;
+    u8 luc_CodeInputTime = 0;        //密码输入的错误次数
+    
+    VFD_AuxDisp_Str("PAS");
+    
+    switch(gu32_SystemState)
+    {
+        case RESETSTATE:
+            luc_CodeInputTime = gu8_ResetInTime;
+            break;
+        case SUMSTATE:
+            luc_CodeInputTime = gu8_SumCheckInTime;
+            break;
+        case SETUPSTATE:
+            luc_CodeInputTime = gu8_SetupInTime;
+            break;
+        case CALIBSTATE:
+            luc_CodeInputTime = gu8_CalibInTime;
+            break;
+        case IOTESTSTATE:
+            luc_CodeInputTime = gu8_IoTestInTime;
+            break;
+        case IODEFINESTATE:
+            luc_CodeInputTime = gu8_IoDefInTime;
+            break;
+        case RECIPESTATE:
+            luc_CodeInputTime = gu8_RecInTime;
+            break;
+        case SHUTDOWNSTATE:
+            luc_CodeInputTime = gu8_ShutDownInTime;
+            break;
+        case MODELSETSTATE:
+            luc_CodeInputTime = gu8_ModelSetInTime;
+            break;
+        case BORRSTATE:
+            luc_CodeInputTime = gu8_BorRInTime;
+            break;
+        default:
+            break;
+    }
+    
+    if (luc_CodeInputTime == 0)             //显示------
+    {
+        VFD_MainDisp_Str("------");
+    }
+    else if (luc_CodeInputTime == 1)        //显示======
+    {
+        VFD_MainDisp_Str("======");
+    }
+    else                                    //显示≡≡≡≡≡≡
+    {
+        VFD_MainDisp_Str("######");
+    }
+    
+    for (i = gu8_DataInLength, j = 5; i > 0; i--, j--)
+    {
+        gu8_MainDispArray[j] = SEG_8;
+        if (j == 0)     //gu8_DataInLength最大为8，有可能导致j--小于0，数组溢出
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_OnOff(u32 ful_Data)
+功    能: 开关状态On OFF 显示
+说    明: 
+入口参数: ful_Data == 0显示OFF，否则显示On
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_OnOff(u32 ful_Data)
+{
+    if (ful_Data == 0)
+        VFD_MainDisp_Str("   OFF");
+    else
+        VFD_MainDisp_Str("    ON");
+}
+
+/*********************************************************************
+函数名称: void Disp_FlapOnOff(u32 ful_Data)
+功    能: 拍袋开关状态显示
+说    明: 
+入口参数: ful_Data == 0，1，2，3 显示 PoFF PF- P-d PFd
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-3-15
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_FlapOnOff(u32 ful_Data)
+{
+    if (ful_Data == 0)
+        VFD_MainDisp_Str("  POFF");
+    else if (ful_Data == 1)
+        VFD_MainDisp_Str("   PF-");
+    else if (ful_Data == 2)
+        VFD_MainDisp_Str("   P-D");
+    else
+        VFD_MainDisp_Str("   PFD");
+}
+
+/*********************************************************************
+函数名称: void Disp_TareMode(u32 ful_Data)
+功    能: 秤体模式选择显示
+说    明: 
+入口参数: ful_Data == 0显示binyES，否则显示Binno
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_TareMode(u32 ful_Data)
+{
+    switch (ful_Data)
+    {
+        case BINYES:
+            VFD_MainDisp_Str("BINYES");
+            break;
+        case BINNO:
+            VFD_MainDisp_Str("BIN NO");
+            break;
+        case BIN2_A:
+            VFD_MainDisp_Str("BIN2-A");
+            break;
+        case BIN2_B:
+            VFD_MainDisp_Str("BIN2-B");
+            break;
+        case NO2_A:
+            VFD_MainDisp_Str(" NO2-A");
+            break;
+        case NO2_B:
+            VFD_MainDisp_Str(" NO2-B");
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_GorNMode(u32 ful_Data)
+功    能: 无斗毛净重显示
+说    明: 
+入口参数: ful_Data == 0显示nEt，否则显示groSS
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_GorNMode(u32 ful_Data)
+{
+    if (ful_Data == GROSS)
+        VFD_MainDisp_Str(" GROSS");
+    else
+        VFD_MainDisp_Str("   NET");
+}
+
+/*********************************************************************
+函数名称: void Disp_BaudRate(u32 ful_Data)
+功    能: 波特率显示
+说    明: 
+入口参数: ful_Data = 0      2400
+                     1      4800
+                     2      9600
+                     3      19200
+                     4      38400
+                     5      57600
+                     6      115200
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_BaudRate(u32 ful_Data)
+{
+    switch(ful_Data)
+    {
+        case 0:
+            VFD_MainDisp_Str("  2400");
+            break;
+        case 1:
+            VFD_MainDisp_Str("  4800");
+            break;
+        case 2:
+        default:
+            VFD_MainDisp_Str("  9600");
+            break;
+        case 3:
+            VFD_MainDisp_Str(" 19200");
+            break;
+        case 4:
+            VFD_MainDisp_Str(" 38400");
+            break;
+        case 5:
+            VFD_MainDisp_Str(" 57600");
+            break;
+        case 6:
+            VFD_MainDisp_Str("115200");
+            break;
+        case 7:
+            VFD_MainDisp_Str("128000");
+            break;
+        case 8:
+            VFD_MainDisp_Str("192000");
+            break;
+        case 9:
+            VFD_MainDisp_Str("230400");
+            break;
+        case 10:
+            VFD_MainDisp_Str("256000");
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_GSDType(u32 ful_Data)
+功    能: GSD类型显示
+说    明: 
+入口参数: ful_Data = 0      GSD-1
+                     1      GSD-2
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-4-16
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_GSDType(u32 ful_Data)
+{
+    if (ful_Data == 0)
+        VFD_MainDisp_Str(" GSD-1");
+    else
+        VFD_MainDisp_Str(" GSD-2");
+}
+
+/*********************************************************************
+函数名称: void Disp_ComMode(u32 ful_Data)
+功    能: 通讯协议显示
+说    明: 
+入口参数: ful_Data == 0显示print
+                      1显示cont
+                      2显示read
+                      3显示bus 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_ComMode(u32 ful_Data)
+{
+    switch(ful_Data)
+    {
+        case 0:
+            VFD_MainDisp_Str(" PRINT");
+            break;
+        case 1:
+        default:
+            VFD_MainDisp_Str("  CONT");
+            break;
+        case 2:
+            VFD_MainDisp_Str("  READ");
+            break;
+        case 3:
+            VFD_MainDisp_Str("READ-O");
+            break;
+        case 4:
+            VFD_MainDisp_Str(" BUS-R");
+            break;
+        case 5:
+            VFD_MainDisp_Str(" BUS-A");
+            break;
+        case 6:
+            VFD_MainDisp_Str("  PBUS");
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_FeedMode(u32 ful_Data)
+功    能: 投料方式显示
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间:2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_FeedMode(u32 ful_Data)
+{
+    if (ful_Data == 0)          //co
+        VFD_MainDisp_Str("    CO");
+    else                        //Sin
+        VFD_MainDisp_Str("   SIN");
+}
+
+/*********************************************************************
+函数名称: void Disp_ParityMode(u32 ful_Data)
+功    能: 校验方式选择
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2013-12-20
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_ParityMode(u32 ful_Data)
+{
+    switch(ful_Data)
+    {
+        case 0:
+            VFD_MainDisp_Str("  18N2");
+            break;
+        case 1:
+        default:
+            VFD_MainDisp_Str("  18E1");
+            break;
+        case 2:
+            VFD_MainDisp_Str("  18O1");
+            break;
+        case 3:
+            VFD_MainDisp_Str("  18N1");
+            break;
+        case 4:
+            VFD_MainDisp_Str("  17N2");
+            break;
+        case 5:
+            VFD_MainDisp_Str("  17E1");
+            break;
+        case 6:
+            VFD_MainDisp_Str("  17O1");
+            break;
+    }
+}
+
+/*********************************************************************
+函数名称: void Disp_HiLo(u32 ful_Data)
+功    能: MODBUS双字寄存器高低字存储顺序HiLo  LoHi
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2011-5-3
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_HiLo(u32 ful_Data)
+{
+    if (ful_Data == 0)          //HiLo
+        VFD_MainDisp_Str("  HILO");
+    else                        //LoHi
+        VFD_MainDisp_Str("  LOHI");
+}
+
+/*********************************************************************
+函数名称: void Disp_PrintType(u32 ful_Data)
+功    能: 
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-04-11
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_PrintType(u32 ful_Data)
+{
+    if (ful_Data == 0)
+        VFD_MainDisp_Str("    16");
+    else if (ful_Data == 1)
+        VFD_MainDisp_Str("    32");
+    else 
+        VFD_MainDisp_Str("    80");
+}
+
+/*********************************************************************
+函数名称: void Disp_No2PackOffTwoSwitch(u32 fu32_Data)
+功    能: 双无斗秤互锁模式同时松袋开关的显示
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2015-02-02
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_No2PackOffTwoSwitch(u32 fu32_Data)
+{
+    if (fu32_Data == 0)
+        VFD_MainDisp_Str("   OFF");
+    else if (fu32_Data == 1)
+        VFD_MainDisp_Str("   ON1");
+    else 
+        VFD_MainDisp_Str("   ON2");
+}
+
+/*********************************************************************
+函数名称: void Disp_PrintLanguage(u32 ful_Data)
+功    能: MODBUS双字寄存器高低字存储顺序HiLo  LoHi
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2011-5-3
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_PrintLanguage(u32 ful_Data)
+{
+    if (ful_Data == 0)          //Chn
+        VFD_MainDisp_Str("   CHN");
+    else                        //Eng
+        VFD_MainDisp_Str("   ENG");
+}
+
+/*********************************************************************
+函数名称: void Disp_AdSamplingRate(u32 ful_Data)
+功    能: AD采样速度
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2011-5-3
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_AdSamplingRate(u32 ful_Data)
+{
+    switch(ful_Data)
+    {
+        case 0:
+        default:
+            VFD_MainDisp_Str("   120");
+            break;
+        case 1:
+            VFD_MainDisp_Str("   240");
+            break;
+        case 2:
+            VFD_MainDisp_Str("   480");
+            break;
+        case 3:
+            VFD_MainDisp_Str("   960");
+            break;
+    }
+}
+
+
+/*********************************************************************
+函数名称: void Disp_ExtType(u32 ful_Data)
+功    能: 扩展板类型
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2011-5-3
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_ExtType(u32 ful_Data)
+{
+    switch(ful_Data)
+    {
+        case 0:
+        default:
+            VFD_MainDisp_Str(" UT-PT");
+            break;
+        case 1:
+            VFD_MainDisp_Str(" UT-DA");
+            break;
+        case 2:
+            VFD_MainDisp_Str(" UT-PB");
+            break;
+        case 3:
+            VFD_MainDisp_Str(" DA-PB");
+            break;
+    }
+}

@@ -1,0 +1,333 @@
+; ======================================================
+; GSD文件：GM8804C-2_ARM仪表使用 GSD-1
+; 产品型号：GM8804C-2_ARM标准版
+; 版本号：Version:  V1.02
+; 文件名：04C-2.GSD 
+;======================================================
+#Profibus_DP
+; Prm-Text-Def-List
+
+PrmText=1
+Text(1)="分度值: 1"
+Text(2)="分度值: 2"
+Text(5)="分度值: 5"
+Text(10)="分度值: 10"
+Text(20)="分度值: 20"
+Text(50)="分度值: 50"
+EndPrmText
+
+PrmText=2
+Text(0)="单位:  g"
+Text(1)="单位: kg"
+Text(2)="单位:  t"
+Text(3)="单位: lb"
+EndPrmText
+
+PrmText=3
+Text(0)="0-无小数"
+Text(1)="0.0-1位小数"
+Text(2)="0.00-2位小数"
+Text(3)="0.000-3位小数"
+Text(4)="0.0000-4位小数"
+EndPrmText
+
+;4 最大分度数
+
+PrmText=5
+Text(0)="无计量斗包装模式"
+Text(1)="有计量斗包装模式"
+Text(2)="双有斗秤互锁模式A"
+Text(3)="双有斗秤互锁模式B"
+Text(4)="双无斗秤互锁模式A"
+Text(5)="双无斗秤互锁模式B"
+EndPrmText
+
+PrmText=6
+Text(0)="毛重包装"
+Text(1)="净重包装"
+EndPrmText
+
+PrmText=7
+Text(0)="组合方式给料"
+Text(1)="单独方式给料"
+EndPrmText
+
+;8 自动清零间隔
+;9 运行状态判稳超时时间
+
+PrmText=10
+Text(0)="副显示配方号"
+Text(1)="副显示总累计次数"
+Text(2)="副显示当前配方累计次数"
+EndPrmText
+
+;11 清零范围
+;12 判稳范围
+;13 零点跟踪范围
+;14 AD数字滤波级数
+;15 卸料滤波级数
+;16 定值滤波级数
+
+PrmText=17
+Text(0)="120次/秒"
+Text(1)="240次/秒"
+Text(2)="480次/秒"
+Text(3)="960次/秒"
+EndPrmText
+
+PrmText=18
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=19
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=20
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=21
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=22
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=23
+Text(1)="ON-打开"
+Text(0)="OFF-关闭"
+EndPrmText
+
+PrmText=24
+Text(0)="OFF-不同时松袋"
+Text(1)="ON1-同时松袋普通模式"
+Text(2)="ON2-同时松袋快速模式"
+EndPrmText
+
+;25 输送机启动延时时间
+;26 输送机运行时间
+;27 再次夹袋延时启动加料时间
+
+
+;-----------------------------
+ExtUserPrmData=1 "最小分度值："
+Unsigned8 1 1-50
+Prm_Text_Ref=1
+EndExtUserPrmData
+
+ExtUserPrmData=2 "单位："
+Unsigned8 1 0-4
+Prm_Text_Ref=2
+EndExtUserPrmData
+
+ExtUserPrmData=3 "小数位数："
+Unsigned8 2 0-4
+Prm_Text_Ref=3
+EndExtUserPrmData
+
+ExtUserPrmData=4 "最大分度数："	;关联仪表最大量程
+Unsigned32 10000 1-100000
+EndExtUserPrmData
+
+ExtUserPrmData=5 "包装秤工作模式："
+Unsigned8 1 0-5
+Prm_Text_Ref=5
+EndExtUserPrmData
+
+ExtUserPrmData=6 "无计量斗包装模式："
+Unsigned8 1 0-1
+Prm_Text_Ref=6
+EndExtUserPrmData
+
+ExtUserPrmData=7 "给料方式："
+Unsigned8 0 0-1
+Prm_Text_Ref=7
+EndExtUserPrmData
+
+ExtUserPrmData=8 "自动清零间隔："
+Unsigned8 0 0-99
+EndExtUserPrmData
+
+ExtUserPrmData=9 "运行状态判稳超时时间："
+Unsigned16 0 0-999
+EndExtUserPrmData
+
+ExtUserPrmData=10 "副显示内容："
+Unsigned8 0 0-2
+Prm_Text_Ref=10
+EndExtUserPrmData
+
+ExtUserPrmData=11 "清零范围："
+Unsigned8 50 1-99
+EndExtUserPrmData
+
+ExtUserPrmData=12 "判稳范围："
+Unsigned8 1 0-99
+EndExtUserPrmData
+
+ExtUserPrmData=13 "零点跟踪范围："
+Unsigned8 1 0-99
+EndExtUserPrmData
+
+ExtUserPrmData=14 "AD数字滤波级数："
+Unsigned8 5 0-9
+EndExtUserPrmData
+
+ExtUserPrmData=15 "卸料滤波级数："
+Unsigned8 3 0-9
+EndExtUserPrmData
+
+ExtUserPrmData=16 "定值滤波级数："
+Unsigned8 4 0-9
+EndExtUserPrmData
+
+ExtUserPrmData=17 "AD采样速度："
+Unsigned8 0 0-3
+Prm_Text_Ref=17
+EndExtUserPrmData
+
+ExtUserPrmData=18 "上电自动清零："
+Unsigned8 0 0-1
+Prm_Text_Ref=18
+EndExtUserPrmData
+
+ExtUserPrmData=19 "手动卸料累计："
+Unsigned8 0 0-1
+Prm_Text_Ref=19
+EndExtUserPrmData
+
+ExtUserPrmData=20 "定值重量保持："
+Unsigned8 0 0-1
+Prm_Text_Ref=20
+EndExtUserPrmData
+
+ExtUserPrmData=21 "累计查询密码："
+Unsigned8 0 0-1
+Prm_Text_Ref=21
+EndExtUserPrmData
+
+ExtUserPrmData=22 "累计清除密码："
+Unsigned8 0 0-1
+Prm_Text_Ref=22
+EndExtUserPrmData
+
+ExtUserPrmData=23 "累计范围扩展："
+Unsigned8 1 0-1
+Prm_Text_Ref=23
+EndExtUserPrmData
+
+ExtUserPrmData=24 "双无斗秤同时松袋："
+Unsigned8 0 0-2
+Prm_Text_Ref=24
+EndExtUserPrmData
+
+ExtUserPrmData=25 "输送机启动延时时间："
+Unsigned16 5 0-999
+EndExtUserPrmData
+
+ExtUserPrmData=26 "输送机运行时间："
+Unsigned16 40 0-999
+EndExtUserPrmData
+
+ExtUserPrmData=27 "再次夹袋延时启动加料时间："
+Unsigned16 20 0-999
+EndExtUserPrmData
+
+
+;-----------------------------------------
+;General parameters
+GSD_Revision    = 1
+Vendor_Name     = "深圳杰曼科技股份有限公司"
+Model_Name      = "GM8804C-2"
+Revision        = "V1.02"
+Ident_Number    = 0xC2FC
+Protocol_Ident  = 0
+Station_Type    = 0
+;FMS_supp       = 0
+Hardware_Release= "H1.0"
+Software_Release= "S1.0"
+9.6_supp        = 1
+19.2_supp       = 1
+45.45_supp      = 1
+93.75_supp      = 1
+187.5_supp      = 1
+500_supp        = 1
+1.5M_supp       = 1
+3M_supp         = 1
+6M_supp         = 1
+;12M_supp       = 1	;暂不支持12M
+MaxTsdr_9.6     = 60
+MaxTsdr_19.2    = 60
+MaxTsdr_45.45   = 250
+MaxTsdr_93.75   = 60
+MaxTsdr_187.5   = 60
+MaxTsdr_500     = 100
+MaxTsdr_1.5M    = 150
+MaxTsdr_3M      = 250
+MaxTsdr_6M      = 450
+;MaxTsdr_12M    = 800  ;暂不支持12M
+;Redundancy     = 0
+;Repeater_Ctrl_Sig	= 2
+;24V_Pins       = 0
+Implementation_Type = "spc3"
+;Bitmap_Device	="GM8804C-2"      ;位图名称
+; Bitmap_Diag	= "Bitmap1D"
+; Bitmap_SF     = "Bitmap1S"
+; Slave-Specification:
+OrderNumber="GM8804C-2"        ;位图名称？
+Freeze_Mode_supp     = 1
+Sync_Mode_supp       = 1
+; Set_Slave_Add_Supp = 0
+Auto_Baud_supp       = 1
+Fail_Safe            = 0
+Min_Slave_Intervall  = 6
+Max_Diag_Data_Len    = 6
+Modular_Station      = 0
+Modul_Offset         = 0
+Slave_Family         = 3@TdF@GMxx
+;Max_Module          = 5
+Max_Input_len        = 224
+Max_Output_len       = 224
+Max_Data_len         = 448
+
+; UserPrmData: Length and Preset:
+User_Prm_Data_Len    = 34
+
+Ext_User_Prm_Data_Ref(0)=1  ;分度值
+Ext_User_Prm_Data_Ref(1)=2  ;单位
+Ext_User_Prm_Data_Ref(2)=3  ;小数点
+Ext_User_Prm_Data_Ref(3)=4	;最大分度 4Bytes
+Ext_User_Prm_Data_Ref(7)=5  ;包装秤工作模式：
+Ext_User_Prm_Data_Ref(8)=6  ;无计量斗包装模式：
+Ext_User_Prm_Data_Ref(9)=7  ;给料方式
+Ext_User_Prm_Data_Ref(10)=8     ;自动清零间隔
+Ext_User_Prm_Data_Ref(11)=9     ;判稳超时时间 2Byte
+Ext_User_Prm_Data_Ref(13)=10    ;副显示内容：
+Ext_User_Prm_Data_Ref(14)=11    ;清零范围                    
+Ext_User_Prm_Data_Ref(15)=12    ;判稳范围                    
+Ext_User_Prm_Data_Ref(16)=13    ;零点跟踪范围                
+Ext_User_Prm_Data_Ref(17)=14    ;AD数字滤波参数              
+Ext_User_Prm_Data_Ref(18)=15    ;卸料滤波参数                
+Ext_User_Prm_Data_Ref(19)=16    ;定值滤波参数                
+Ext_User_Prm_Data_Ref(20)=17    ;AD采样速度                  
+Ext_User_Prm_Data_Ref(21)=18    ;上电自动清零开关            
+Ext_User_Prm_Data_Ref(22)=19    ;手动卸料累计开关            
+Ext_User_Prm_Data_Ref(23)=20    ;定值重量保持开关            
+Ext_User_Prm_Data_Ref(24)=21    ;累计查询密码开关            
+Ext_User_Prm_Data_Ref(25)=22    ;累计清除密码开关            
+Ext_User_Prm_Data_Ref(26)=23    ;累计范围扩展开关            
+Ext_User_Prm_Data_Ref(27)=24    ;双无斗秤同时松袋：
+Ext_User_Prm_Data_Ref(28)=25    ;输送机启动延时时间：2Byte
+Ext_User_Prm_Data_Ref(30)=26    ;输送机运行时间：2Byte
+Ext_User_Prm_Data_Ref(32)=27    ;再次夹袋延时启动加料时间：2Byte
+                                    
+Module="10AI+24DI+32DI,2AO+32DO" 0x59,0x12,0x13,0x61,0x23
+
+EndModule

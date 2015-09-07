@@ -1,0 +1,45 @@
+#ifndef _INCLUDE_
+#define _INCLUDE_
+
+//调试用功能的宏定义，正式编译时要注释掉      for test
+#define DEBUG_ADCNVT_TIMES      //副显示实际AD转换次数/秒
+
+//#define DEBUG_WT_SEND           
+//CONT通讯方式下：串口1不停发送滤波前AD码和滤波后AD码；串口2不停发送滤波前重量和滤波后重量
+//PRINT方式每次加料过程结束后，发送快加时间、中加时间、慢加时间、启动到定值结束时间、一次加料过程时间、定值结束重量
+
+
+
+
+    #include "string.h"     //为了使用memcpy()内存拷贝,memset()等函数
+    #include "71x_lib.h"
+    #include "stdlib.h"     //随机数函数srand() rand() abs()等
+    #include "IO.h"
+    #include "RTC.h"
+    #include "Buzzer.h"
+    #include "UserBin.h"
+    #include "UserLib.h"
+    #include "F_RAM.h"
+    #include "VFD.h"
+    #include "Timer.h"
+    #include "AD.h"
+    #include "Parameter.h"
+    #include "DisplayAndKey.h"
+    #include "main.h"
+    #include "StopAndRunState.h"
+    #include "CalibState.h"
+    #include "ADtoWeight.h"
+    #include "SetupState.h"
+    #include "Recipe.h"
+    #include "TimeAndDate.h"
+    #include "BatchState.h"
+    #include "Sum.h"
+    #include "ShutdownState.h"
+    #include "RunState.h"
+    #include "UART.h"
+    #include "Modbus.h"
+    #include "DebugState.h"
+    #include "PrintState.h"
+    #include "PROFIBUS_DP.h"
+
+#endif

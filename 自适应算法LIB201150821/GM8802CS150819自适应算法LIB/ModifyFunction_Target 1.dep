@@ -1,0 +1,5 @@
+Dependencies for Project 'ModifyFunction', Target 'Target 1': (DO NOT MODIFY !)
+F (.\Modify.c)(0x55D6BDC1)(-c --cpu ARM7TDMI -g -O0 --apcs=interwork -I d:\Keil_v5\ARM\RV31\INC-I d:\Keil_v5\ARM\CMSIS\Include-o .\modify.o --omf_browse .\modify.crf --depend .\modify.d)
+I (d:\Keil_v5\ARM\ARMCC\include\stdbool.h)(0x53463A44)
+I (Modify.h)(0x55D6D8C0)
+I (d:\Keil_v5\ARM\ARMCC\include\stdint.h)(0x53463A44)

@@ -1,0 +1,1780 @@
+/*
+Description:            PROFIBUS-DP总线相关功能
+Author:                 丛海旭
+Date:                   2014-4-4
+IC:                     PB-OEM2-SE嵌入式PROFIBUS总线桥 北京鼎实创新科技有限公司
+*/
+
+/*GSD-1文件：
+对应该新ARM平台的GSD文件，供新做设备的客户使用
+
+*/
+/*从仪表输出到主站：====================================================
+16DI: 状态位
+    .0  0: 停止；1: 运行。
+    .1  加料前
+    .2  大投
+    .3  中投
+    .4  小投
+    .5  定值
+    .6  超欠差
+    .7  报警
+    .8  夹袋
+    .9  拍袋
+    .10 卸料
+    .11 零区
+    .12 供料
+    .13 批次完成
+    .14 缺料
+    .15 0: 毛重；1: 净重。
+    .16 0: 不稳；1: 稳定。
+    .17 0: 正常；1: 溢出。
+    .18 
+    .19 上料位
+    .20 中料位
+    .21 下料位
+    .22 卸料门关闭到位
+    .23 夹袋到位
+    .24 卸料振打
+    .25 打码
+    .26 截料
+    .27 提袋
+    .28 推袋
+    .29 
+    .30 写入错误:数据超限
+    .31 写入错误:写入条件不满足
+
+8DI: (数据状态)
+    D7:符号位,1:”-”; 0:”+”
+    D6~D5:2AI数据单位.
+        00:g
+        01:kg
+        10:t
+        11:保留
+    D4~D2:2AI数据的小数点
+        000:无小数点
+        001:一位小数点,0.0
+        010:两位小数点,0.00
+        011三位小数点,0.000
+        100:四位小数点,0.0000
+        其余:保留.
+    D1~D0:当前传送的2AI数据类型
+        00:当前重量.
+        01: 累计重量
+        10: 累计次数
+        11: 保留
+        
+2AI: 按要求传输给主站的数据,4字节.高位数据在前,低位数据在后.
+
+从主站输出到仪表：======================================================
+16DO: 开关量输入
+    .0  启动
+    .1  急停
+    .2  清零
+    .3  清报警
+    .4  选配方
+    .5  夹松袋
+    .6  手动卸料
+    .7  手动小投
+    .8  打印总累计数据
+    .9  清除总累计数据
+    .10 手动运行一次
+    .11 停止
+    .12 手动大投
+
+8DO: 写入数据类型
+    D7~D2:2AO写入数据类型
+        00000:(0)   保留,不会将2AO中数据写入仪表
+        00001:(1)   F1.1 目标值
+        00010:(2)   F1.2 大投提前量
+        00011:(3)   F1.3 中投提前量
+        00100:(4)   F1.4 落差值
+        00101:(5)   F1.5 零区值
+        00110:(6)   F1.6 拍袋起始重量
+        00111:(7)   F2   超欠差报警开关
+        01000:(8)   F2.1 超量值
+        01001:(9)   F2.2 欠量值
+        01010:(10)  F2.3 超欠差暂停开关
+        01011:(11)  F3.1 t1
+        01100:(12)  F3.2 t2_b
+        01101:(13)  F3.3 t3
+        01110:(14)  F3.4 t4
+        01111:(15)  F3.5 t5
+        10000:(16)  F3.6 t6
+        10001:(17)  F3.7 t7
+        10010:(18)  F3.8 t2_a
+        10011:(19)  F3.9 t9
+        10100:(20)  F3.10 t10
+        010101:(21) F3.11 t11
+        010110:(22) F3.12 t12
+        010111:(23) F4   落差修正开关
+        011000:(24) F4.1 落差修正次数
+        011001:(25) F4.2 落差修正范围
+        011010:(26) F4.3 落差修正幅度
+        011011:(27) F5   拍袋模式
+        011100:(28) F5.1 加料中拍袋次数
+        011101:(29) F5.2 定值后拍袋次数
+        011110:(30) F5.3 拍袋延时t8
+        011111:(31) F5.4 拍袋输出有效时间
+        100000:(32) F5.5 拍袋输出无效时间
+        100001:(33) F5.6 额外拍袋输出有效时间
+        100010:(34) F6   小投点动开关
+        100011:(35) F6.1 小投点动输出有效时间
+        100100:(36) F6.2 小投点动输出无效时间
+        100101:(37) F7   单秤组合次数
+        100110:(38) F8   卸料震打开关
+        100111:(39) F8.1 卸料超时时间
+        101000:(40) F8.2 卸料振打有效时间
+        101001:(41) F8.3 卸料振打无效时间
+        101010:(42) F8.4 卸料振打次数
+        101011:(43) F9   打码控制功能开关
+        101100:(44) F9.1 打码启动延时TP1
+        101101:(45) F9.2 打码输出有效时间TP2
+        101110:(46) F9.3 打码时不允许卸料（BINYES）、打码时不允许加料（BINNO）
+        其余保留
+        101111:(47)
+        110000:(48)
+        110001:(49)
+        110010:(50)
+        110011:(51)
+        110100:(52)
+        110101:(53)
+        110110:(54)
+        110111:(55)
+        111000:(56)
+        111001:(57)
+        111010:(58)
+        111011:(59)
+        111100:(60)
+        111101:(61)
+        111110:(62) 配方号
+        111111:(63) 批次数
+    D1~D0:要求2AI传送的数据类型
+        00: (0) 当前重量
+        01: (1) 累计重量
+        10: (2) 累计次数
+        11: (3) 保留
+
+2AO: 需要写入的数据, 4字节.高位数据在前,低位数据在后.
+*/
+
+
+
+/*GSD-2文件：
+
+该GSD文件是为了兼容老版本GM8804C-2的PROFIBUS通信，采用老版本的报文格式
+16DI(两个字节)、16DO(两个字节) 、1Byte In、1Byte Out、2AI(四个字节)、2AO(四个字节)
+
+; ======================================================
+; GSD文件：带ProfiBus接口的 包装秤GM8804C2P　深圳杰曼科技有限公司
+; 产品型号：GM8804C2P
+; 版本号：Version:  V1.0
+; 文件名：04C2P.GSD
+;======================================================
+#Profibus_DP
+; Prm-Text-Def-List
+
+PrmText=1
+Text(0)="分度值: 1"
+Text(1)="分度值: 2"
+Text(2)="分度值: 5"
+Text(3)="分度值: 10"
+Text(4)="分度值: 20"
+Text(5)="分度值: 50"
+EndPrmText
+
+PrmText=2
+Text(0)="单位:  g"
+Text(1)="单位: kg"
+Text(2)="单位:  t"
+EndPrmText
+
+PrmText=3
+Text(0)="0－无小数"
+Text(1)="0.0－1位小数"
+Text(2)="0.00－2位小数"
+Text(3)="0.000－3位小数"
+Text(4)="0.0000－4位小数"
+EndPrmText
+
+;4 最大分度数
+
+PrmText=5
+Text(0)="0－不进行零点跟踪"
+Text(1)="1d－追零范围默认值"
+Text(2)="2d－范围内零点跟踪"
+Text(3)="3d－范围内零点跟踪"
+Text(4)="4d－范围内零点跟踪"
+Text(5)="5d－范围内零点跟踪"
+Text(6)="6d－范围内零点跟踪"
+Text(7)="7d－范围内零点跟踪"
+Text(8)="8d－范围内零点跟踪"
+Text(9)="9d－范围内零点跟踪"
+EndPrmText
+
+PrmText=6
+Text(1)="1d－判稳范围"
+Text(2)="2d－判稳范围"
+Text(3)="3d－判稳范围"
+Text(4)="4d－判稳范围"
+Text(5)="5d－判稳范围"
+Text(6)="6d－判稳范围"
+Text(7)="7d－判稳范围"
+Text(8)="8d－判稳范围"
+Text(9)="9d－判稳范围"
+EndPrmText
+
+;7 清零范围 1%-99%
+
+PrmText=8
+Text(0)="0－上电不自动清零"
+Text(1)="1－上电自动清零"
+EndPrmText
+
+;9 清零间隔 0~99
+
+PrmText=10
+Text(0)="0－无滤数字波"
+Text(1)="1－数字滤波最弱"
+Text(2)="2－数字滤波很弱"
+Text(3)="3－数字滤波较弱"
+Text(4)="4－数字滤波稍弱"
+Text(5)="5－适中(默认值)"
+Text(6)="6－数字滤波稍强"
+Text(7)="7－数字滤波较强"
+Text(8)="8－数字滤波很强"
+Text(9)="9－数字滤波最强"
+EndPrmText
+
+PrmText=11
+Text(0)="0－无斗包装模式"
+Text(1)="1－有斗包装模式"
+EndPrmText
+
+
+;-----------------------------
+ExtUserPrmData=1 "最小分度值(建议设置低于5)："
+Unsigned8 0 0-5
+Prm_Text_Ref=1
+EndExtUserPrmData
+
+ExtUserPrmData=2 "单位："
+Unsigned8 1 0-4
+Prm_Text_Ref=2
+EndExtUserPrmData
+
+ExtUserPrmData=3 "小数位数："
+Unsigned8 0 0-4
+Prm_Text_Ref=3
+EndExtUserPrmData
+
+ExtUserPrmData=4 "最大分度数：" ;关联仪表最大量程
+Unsigned16 10000 350-30000
+EndExtUserPrmData
+
+ExtUserPrmData=5 "零点跟踪范围："
+Unsigned8 1 0-9
+Prm_Text_Ref=5
+EndExtUserPrmData
+
+ExtUserPrmData=6 "判稳范围："
+Unsigned8 1 1-9
+Prm_Text_Ref=6
+EndExtUserPrmData
+
+ExtUserPrmData=7 "清零范围%："
+Unsigned8 50 0-99
+EndExtUserPrmData
+
+ExtUserPrmData=8 "上电自动清零开关："
+Unsigned8 0 0-1
+Prm_Text_Ref=8
+EndExtUserPrmData
+
+ExtUserPrmData=9 "运行时清零间隔："
+Unsigned8 00 00-99
+EndExtUserPrmData
+
+ExtUserPrmData=10 "数字滤波参数："
+Unsigned8 7 0-9
+Prm_Text_Ref=10
+EndExtUserPrmData
+
+ExtUserPrmData=11 "包装秤工作模式开关："
+Unsigned8 1 0-1
+Prm_Text_Ref=11
+EndExtUserPrmData
+;-----------------------------------------
+;General parameters
+GSD_Revision    = 1
+Vendor_Name     = "深圳杰曼科技有限公司"
+Model_Name      = "GM8804C2P"
+Revision        = "V1.0"
+Ident_Number    = 0xC2FC
+Protocol_Ident  = 0
+Station_Type    = 0
+;FMS_supp       = 0
+Hardware_Release= "H1.0"
+Software_Release= "S1.0"
+9.6_supp        = 1
+19.2_supp       = 1
+45.45_supp      = 1
+93.75_supp      = 1
+187.5_supp      = 1
+500_supp        = 1
+1.5M_supp       = 1
+3M_supp         = 1
+6M_supp         = 1
+;12M_supp       = 1 ;暂不支持12M
+MaxTsdr_9.6     = 60
+MaxTsdr_19.2    = 60
+MaxTsdr_45.45   = 250
+MaxTsdr_93.75   = 60
+MaxTsdr_187.5   = 60
+MaxTsdr_500     = 100
+MaxTsdr_1.5M    = 150
+MaxTsdr_3M      = 250
+MaxTsdr_6M      = 450
+;MaxTsdr_12M    = 800  ;暂不支持12M
+;Redundancy     = 0
+;Repeater_Ctrl_Sig  = 2
+;24V_Pins       = 0
+Implementation_Type = "spc3"
+;Bitmap_Device  ="GM8804C2P"      ;位图名称
+; Bitmap_Diag   = "Bitmap1D"
+; Bitmap_SF     = "Bitmap1S"
+; Slave-Specification:
+OrderNumber="GM8804C2P"        ;位图名称？
+Freeze_Mode_supp     = 1
+Sync_Mode_supp       = 1
+; Set_Slave_Add_Supp = 0
+Auto_Baud_supp       = 1
+Fail_Safe            = 0
+Min_Slave_Intervall  = 6
+Max_Diag_Data_Len    = 6
+Modular_Station      = 0
+Modul_Offset         = 0
+Slave_Family         = 3@TdF@GMxx
+;Max_Module          = 5
+Max_Input_len        = 224
+Max_Output_len       = 224
+Max_Data_len         = 448
+
+; UserPrmData: Length and Preset:
+User_Prm_Data_Len    = 12
+
+Ext_User_Prm_Data_Ref(0)=1
+Ext_User_Prm_Data_Ref(1)=2
+Ext_User_Prm_Data_Ref(2)=3
+Ext_User_Prm_Data_Ref(3)=4  ;最大分度 2Byte
+Ext_User_Prm_Data_Ref(5)=5
+Ext_User_Prm_Data_Ref(6)=6
+Ext_User_Prm_Data_Ref(7)=7
+Ext_User_Prm_Data_Ref(8)=8
+Ext_User_Prm_Data_Ref(9)=9
+Ext_User_Prm_Data_Ref(10)=10
+Ext_User_Prm_Data_Ref(11)=11
+
+Module="16DI+1BI+2AI,16DO+1BI+2AO" 0x11,0x10,0x51,0x21,0x20,0x61
+;DI:开关量,仪表输入到主站,1Word(2Byte)I
+;DO:开关量,主站输出到仪表,1Word(2Byte)
+;2AI:整  数,仪表输入到主站,2Word(4Byte)
+
+;1B:字节,表示AO数据的类别.
+;2words out(AO):整  数,主站输出到仪表,2Word(4Byte)
+
+EndModule
+*/
+
+/*从仪表输出到主站：====================================================
+16DI:
+DI9:写入错误:数据超限
+DI8:写入错误:写入条件不满足
+DI7~DI5:配料进程
+000:  停止
+001:  加料前
+010:  快加
+011:  中加
+100:  慢加
+101:  定值
+110:  拍袋或松袋
+111:  批次数完成
+DI4~DI3:毛重/净重
+00: 毛重
+01: 净重
+10: 其他(例如,累计数据无毛净重之分)
+11 : 其他,保留
+DI2: 仪表溢出状态，0正常，1溢出
+DI1: 仪表稳定状态，0不稳，1稳定
+DI0: 仪表零点状态，0非零，1零点
+
+1Byte In: (数据状态)
+D7:符号位,1:”-”; 0:”+”
+D6~D5:2AI数据单位.
+00:g
+01:kg
+10:t
+11:保留
+D4~D2:2AI数据的小数点
+000:无小数点
+001:一位小数点,0.0
+010:两位小数点,0.00
+011三位小数点,0.000
+100:四位小数点,0.0000
+其余:保留.
+D1~D0:当前传送的2AI数据类型
+ 00:当前重量.
+ 01: 累计重量
+ 10: 累计次数
+ 11: 保留
+   
+2AI : 按要求传输给主站的数据,4字节.高位数据在前,低位数据在后.
+
+从主站输出到仪表======================================================
+16DO：
+DO15~DO11: 保留.
+DO9 : 当该位由0置为1时,停止状态下,取反手动放料,则返回否定信息.
+DO8 : 当该位由0置为1时,停止状态下,清除累计值,否则不响应.
+DO7 : 当该位由0置为1时,停止状态下,取反手动小投,否则返回否定信息
+DO6 : 当该位由0置为1时,松袋
+DO5 : 当该位由0置为1时, 夹袋
+DO4 : 当该位由0置为1时,停止状态下,跳转到下一配方.
+DO3 : 当该位由0置为1时,清除报警
+DO2 : 当该位由0置为1时,停止状态下,清零.
+DO1 : 当该位由0置为1时,停止.
+DO0 : 当该位由0置为1时,启动.
+
+1Byte Out:
+D7~D2:2AO写入数据类型
+00000:(0)   保留,不会将2AO中数据写入仪表
+00001:(1)   目标(重量控制参数均应小于最大量程).
+00010:(2)   大投提前量.
+00011:(3)   中投提前量.
+00100:(4)   落差值.
+00101:(5)   零区值.
+00110:(6)   t7 
+00111:(7)   超欠差开关(写入奇数打开,偶数关闭,以下开关类型均类似)
+01000:(8)   超欠差暂停开关
+01001:(9)   超差值.
+01010:(10)  欠差值.
+01011:(11)  t1(时间参数均应在00~99)
+01100:(12)  t2
+01101:(13)  t3
+01110:(14)  t4
+01111:(15)  t5
+10000:(16)  t6
+10001:(17)  自动落差修正开关
+10010:(18)  落差修正次数(00~99)
+10011:(19)  落差修正范围(00~99)
+10100:(20)  落差修正幅度(1~3)
+010101:(21) 拍袋开关
+010110:(22) 拍袋延时
+010111:(23) 拍袋持续时间
+011000:(24) 拍袋次数
+011001:(25) 拍袋有效电平时间
+011010:(26) 拍袋无效电平时间
+011011:(27) 第一次拍袋有效电平时间
+011100:(28) 第一次拍袋无效电平时间
+011101:(29) 点动小投
+011110:(30) 点动小投有效电平时间
+011111:(31) 点动小投无效电平时间
+100000:(32) 连续放料次数
+其 余:     保留,不会将2AO中数据写入仪表
+
+D1~D0:要求2AI传送的数据类型
+ 00: (0) 当前重量.
+ 01: (1) 累计重量
+ 10: (2) 累计次数
+ 11: (3) 保留
+
+2AO: 需要写入的数据, 4字节.高位数据在前,低位数据在后.
+
+*/
+
+
+
+#include "include.h"
+
+
+
+//===========================移植该文件时需修改此处=========================================
+//SE_REQ_IT - P2.9       0：SE初始化完毕         1：SE初始化等待
+//SE_S_RTS - P1.11       0：SE等待（允许）接收   1：SE拒绝接收
+//SE_LINK - P1.12     0：SE已经成功连接DP总线 1：SE未成功连接DP总线
+
+//CUP和PB-OEM2-SE之间通讯的波特率，数据方式等 
+//UART1连接DP板串口 波特率38400 8位数据 偶校验 1位停止位
+#define PBUS_BAUDRATE   38400
+#define PBUS_PARITY     UART_EVEN_PARITY
+#define PBUS_STOPBITS   UART_1_StopBits
+#define PBUS_DATALEN    UARTM_8D_P
+
+#define PBUS_UARTX          UART1               //与SE接口板通讯使用的UART串口
+#define PBUS_UARTX_IRQC     UART1_IRQChannel    //
+#define PBUS_UARTX_SIPL     UART1_SIPL          //串口中断优先级
+
+
+#define USER_PRM_LEN_GSD2       12              //用户参数长度
+#define SE_A_LEN_GSD2           9               //ProfiBus输出数据长度(A报文)主站到仪表
+#define SE_B_LEN_GSD2           (USER_PRM_LEN_GSD2+2)  //用户参数报文格式长度(B报文)主站到仪表
+#define SE_IN_LEN_GSD2          9               //ProfiBus输入数据长度(REQ报文)仪表到主站
+
+
+//PROFIBUS通讯时的串口收发缓存数组的最大长度，注意系统进行通讯的数组长度一定要大于这个值
+#define  PBUS_RXDLEN   49
+#define  PBUS_TXDLEN   49
+
+//系统负责进行与接口板通讯的接收和发送缓存数组
+u8 *gu8p_RxdArray = gu8_RxdArray_UART1;
+u8 *gu8p_TxdArray = gu8_TxdArray_UART1;
+
+//从机号
+#define PBUS_ADDRESS    gs_Setup.TareNumber_1
+//系统中断时间10ms
+#define SYS10MS     gu32_Sys10ms
+//初始化不成功后再次初始化的间隔，单位10ms
+#define SE_INIT_INTERVAL   50
+//SE接口板和仪表通讯的最大间隔,即发送完成后再次间隔时间内没有接收到完整数据则再次启动发送，单位10ms
+#define SE_COM_INTERVAL    10
+
+//接口板初始化相关数据，具体查询SE接口板配置表，该数组不包含第一个字节从机号
+//分别是GSD1和GSD2对应的初始化数组
+const u8 cu8_PbusInit[2][48] = {
+{0xC2,0xFC,0x06,0x11,0x10,0x51,0x21,0x20,0x61,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x09,0x09,USER_PRM_LEN_GSD2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+{0xC2,0xFC,0x06,0x11,0x10,0x51,0x21,0x20,0x61,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0x09,0x09,USER_PRM_LEN_GSD2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+
+//==========================================================================================
+u8 gu8_ExtType;     //扩展板类型
+u32 gu32_GSDType;   //GSD文件
+
+//串口相关
+volatile bool gb_PbusRxdReadyFlg;    //串口接收已经完成标志
+volatile bool gb_PbusTxdingFlg;      //串口正在发送标志
+volatile bool gb_PbusRxdingFlg;      //串口正在接收标志
+u8 gu8_PbusTxdLen;          //发送数据长度
+u8 gu8_PbusRxdLen;          //接收数据长度
+u8 gu8_PbusTxdCnt;          //接收时的数据个数记录
+u8 gu8_PbusRxdCnt;          //发送时的数据个数记录
+//SE接口板和CPU的通讯内容相关
+u8 gu8_ReqCom;      
+/*请求数据命令req_com
+D7~D2：不用
+D1：0：无效 1：清接口板用户参数已由主站更新标记AB_status
+D0：0：请求接口回答PROFIBUS输出数据（A报文） 1：请求接口回答PROFIBUS主站更新的用户参数数据（B报文）*/
+
+/*报文类型及接口状态AB_status
+D7：0：A报文 1：B报文
+D6~D3：不用
+D2~D1：00：接口板接收用户板报文无措
+       01：接口板接收用户板报文字符有偶校验错
+       10：接口板接收用户板报文有校验和错
+       11：不用
+D0：0：接口板还没有接收到主站发送的用户参数、或主站没有更新用户参数
+    1：接口板用户参数数据已由主站更新*/
+
+u8 gu8_WriteErrID;      //写数据错误类型
+u8 gu8_PbusSendType;    //PROFIBUS发送数据类型
+u8 gu8_PbusWriteType;   //PROFIBUS写入数据类型
+u8 gu8_16DoTempHi;      //16DO的高位缓存
+u8 gu8_16DoTempLow;     //16DO的低位缓存
+u32 gu32_TimeTemp;
+
+/*********************************************************************
+函数名称: bool Pbus_CheckExt(void)
+功    能: 检查是否连接DP扩展板
+说    明: 
+入口参数: 
+返 回 值: true：已连接DP扩展板  false：未连接DP扩展板
+设    计: 丛海旭               时    间: 2014-4-4
+修    改:                      时    间: 
+*********************************************************************/
+bool Pbus_CheckExt(void)
+{
+    //定义PBUS_REQ_IT、PBUS_S_RTS、PBUS_LINK为TTL电平输入
+    GPIO_Config(GPIO2, (1<<9), GPIO_IN_TRI_TTL);    //SE_REQ_IT
+    GPIO_Config(GPIO1, (1<<11), GPIO_IN_TRI_TTL);   //SE_S_RTS 
+    GPIO_Config(GPIO1, (1<<12), GPIO_IN_TRI_TTL);   //SE_LINK  
+    
+    /*
+    未连接PBUS_UART板，上电时三个引脚状态：
+    SE_REQ_IT = false;
+    SE_S_RTS = true;
+    SE_LINK = true;
+    连接PBUS_UART板，上电时三个引脚状态：
+    SE_REQ_IT = true;
+    SE_S_RTS = false;
+    SE_LINK = true;
+    
+    所以根据PBUS_S_RTS和PBUS_LINK的状态能判断当前仪表是否有配了DP通讯的扩展板
+    */
+    
+    if (SE_REQ_IT == true && SE_S_RTS == false)   //for test
+        return true;
+    else
+        return false;
+}
+
+/*********************************************************************
+函数名称: void UARTInit_Pbus(void)
+功    能: 与SE接口板进行通讯前串口初始化
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-04-16
+修    改:                      时    间: 
+*********************************************************************/
+void UARTInit_Pbus(void)
+{
+    gb_PbusRxdReadyFlg = false;
+    gb_PbusTxdingFlg = false;
+    gb_PbusRxdingFlg = false;
+    gu8_PbusTxdLen = 0;          //发送数据长度
+    gu8_PbusRxdLen = 0;          //接收数据长度
+    gu8_PbusTxdCnt = 0;          //接收时的数据个数记录
+    gu8_PbusRxdCnt = 0;          //发送时的数据个数记录
+    
+    UART_Init(PBUS_UARTX);               //复位
+    UART_GuardTimeConfig(PBUS_UARTX,0); //配置Txempty置位等待延时
+    UART_FifoConfig(PBUS_UARTX,DISABLE);//关闭FIFO
+    UART_LoopBackConfig(PBUS_UARTX,DISABLE);//关闭回写
+
+    //根据串口相关设置初始化串口 波特率 校验方式
+    UART_Config(PBUS_UARTX,PBUS_BAUDRATE,PBUS_PARITY,PBUS_STOPBITS,PBUS_DATALEN);
+    UART_RxConfig(PBUS_UARTX,ENABLE);//使能接收
+    UART_FifoReset(PBUS_UARTX, UART_RxFIFO);
+    UART_OnOffConfig(PBUS_UARTX,ENABLE);//使能串口
+    UART_ItConfig(PBUS_UARTX,UART_TxEmpty,DISABLE);   //关闭串口发送中断
+//    UART_ItConfig(PBUS_UARTX,UART_RxBufNotEmpty,DISABLE);//关闭接收中断
+    UART_ItConfig(PBUS_UARTX,UART_RxBufNotEmpty,ENABLE);//使能接收中断
+
+    EIC_IRQChannelPriorityConfig(PBUS_UARTX_IRQC, PBUS_UARTX_SIPL);
+    EIC_IRQChannelConfig(PBUS_UARTX_IRQC, ENABLE);
+}
+
+/*********************************************************************
+函数名称: void IRQ_PBUS_UART1(void)
+功    能: PROFIBUS通讯的串口中断处理
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-4-16
+修    改:                      时    间: 
+*********************************************************************/
+void IRQ_Pbus(void)
+{
+    u8 lu8_RxdData;
+    
+    //发送中断
+    if(UART_FlagStatus(PBUS_UARTX) & (UART_TxEmpty|UART_TxHalfEmpty))
+    {
+        if (gb_PbusTxdingFlg)   //正在发送标志
+        {   //发送数据
+            if (gu8_PbusTxdCnt < gu8_PbusTxdLen)
+            {
+                UART_ByteSend(PBUS_UARTX,&gu8p_TxdArray[gu8_PbusTxdCnt++]);
+            }
+            else
+            {
+                gb_PbusTxdingFlg = false;   //发送完成
+                gb_PbusRxdingFlg = true;    //正在接收
+                gu8_PbusTxdCnt = 0;
+                UART_ItConfig(PBUS_UARTX,UART_TxEmpty,DISABLE); //关发送中断
+            }
+        }
+        else
+        {   //发送完成
+            gu8_PbusTxdCnt = 0;
+            UART_ItConfig(PBUS_UARTX,UART_TxEmpty,DISABLE); //关发送中断
+        }
+    }
+    //接收中断
+    if(UART_FlagStatus(PBUS_UARTX) & (UART_RxBufNotEmpty))
+    {
+        lu8_RxdData = (u8)(PBUS_UARTX->RxBUFR);
+        UART_FifoReset(PBUS_UARTX, UART_RxFIFO);
+        if (gb_PbusTxdingFlg == false)
+        {   //已经发送完成，允许接收
+            gu8p_RxdArray[gu8_PbusRxdCnt++] = lu8_RxdData;
+            if (gu8_PbusRxdCnt >= gu8_PbusRxdLen)
+            {
+                gb_PbusRxdReadyFlg = true;  //接收完成
+                gb_PbusRxdingFlg = false;   //接收完成
+            }
+            if (gu8_PbusRxdCnt >= (PBUS_RXDLEN+1))    //防止数组溢出
+                gu8_PbusRxdCnt = 0;
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: void Pbus_Init(void)
+功    能: SE接口板初始化
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-04-17
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_Init(void)
+{
+    static bool sb_Initlg = false;
+    static u32 su32_Time = 0;
+    
+    if (SE_REQ_IT)    //gb_PbusInitOKFlg是防止初始化后仪表接收到初始化命令有无认为没有初始化成功
+    {   //DP扩展板有初始化请求
+        if (SE_S_RTS == false)
+        {   //DP扩展板允许接收 发送初始化报文
+            if (gb_PbusTxdingFlg == false)
+            {   //串口没有数据发送
+                //清接收和发送缓存
+                if (su32_Time == 0 || SYS10MS - su32_Time >= SE_INIT_INTERVAL)
+                {   //初始化不成功后再次初始化的间隔
+                    sb_Initlg = true;
+                    memset(gu8p_RxdArray, 0, PBUS_RXDLEN);
+                    memset(gu8p_TxdArray, 0, PBUS_TXDLEN);
+                    gu8p_TxdArray[0] = PBUS_ADDRESS; //从机号
+                    memcpy(&gu8p_TxdArray[1], &cu8_PbusInit[gu32_GSDType][0], PBUS_TXDLEN - 1);   //初始化数组
+                    Pbus_StartSend(gu8p_TxdArray, PBUS_TXDLEN, PBUS_RXDLEN);   //开始发送
+                    su32_Time = SYS10MS;
+                }
+            }
+        }
+    }
+    else
+    {
+        if (sb_Initlg)
+        {   //已经发送过初始化报文，并且SE_REQ_IT已经变低电平
+            //能执行到这里证明SE接口板已经初始化成功
+            sb_Initlg = false;
+            gu8_ReqCom = 0;     //初始化后首先请求A报文
+            gu8_WriteErrID = 0; //清写数据错误标志
+            gu8_PbusSendType = 0;
+            gu8_PbusWriteType = 0;
+            gu8_16DoTempHi = 0;
+            gu8_16DoTempLow = 0;
+            BuzzerStart(5);
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: void Pbus_SendDataDeal(u8 *fu8p_Array, u32 fu32_GSDType)
+功    能: PROFIBUS发送数据的构造，从仪表输出到主站的数据
+说    明: 
+入口参数: fu8p_Array：发送数据首地址 fu32_GSDType：GSD文件类型
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-05-04
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_SendDataDeal(u8 *fu8p_Array, u32 fu32_GSDType)
+{
+    ULDATA UL_Value;
+    u8 i;
+    
+    if (fu32_GSDType == GSD_1)
+    {   //GSD1对应的数据构造
+        
+    }
+    else
+    {   //GSD2对应的数据构造
+        fu8p_Array[0] = gu8_ReqCom;     //请求数据命令
+        /*16DI：
+        DI9:写入错误:数据超限
+        DI8:写入错误:写入条件不满足
+        DI7~DI5:配料进程
+        000:  停止
+        001:  加料前
+        010:  快加
+        011:  中加
+        100:  慢加
+        101:  定值
+        110:  拍袋或松袋
+        111:  批次数完成
+        DI4~DI3:毛重/净重
+        00: 毛重
+        01: 净重
+        10: 其他(例如,累计数据无毛净重之分)
+        11 : 其他,保留
+        DI2: 仪表溢出状态，0正常，1溢出
+        DI1: 仪表稳定状态，0不稳，1稳定
+        DI0: 仪表零点状态，0非零，1零点*/
+        fu8p_Array[1] = gu8_WriteErrID; //写数据错误类型
+        gu8_WriteErrID = 0;     //清除错误类型
+        fu8p_Array[2] |= (gb_ZeroPosition ? 0x01 : 0x00);   //零位
+        fu8p_Array[2] |= (gb_StabFlg ? 0x02 : 0x00);        //稳定
+        fu8p_Array[2] |= ((gb_OflFlg || gb_AdOflFlg) ? 0x04 : 0x00);        //溢出
+        fu8p_Array[2] |= (gb_DispNetFlg ? 0x08 : 0x00);        //净重
+        fu8p_Array[2] |= (gu8_PbusSendType ? 0x10 : 0x00);        //数据类型
+        if (gb_RunFlg)
+        {
+            if (gb_BatchOverFlg)    //批次完成
+                fu8p_Array[2] |= 0xE0;
+            else if (gu32_Process == T1PROCESS) //加料前
+                fu8p_Array[2] |= 0x20;
+            else if (gu32_Process == LARGEPROCESS)  //快加
+                fu8p_Array[2] |= 0x40;
+            else if (gu32_Process == MIDDLEPROCESS) //中加
+                fu8p_Array[2] |= 0x60;
+            else if (gu32_Process == SMALLPROCESS)  //慢加
+                fu8p_Array[2] |= 0x80;
+            else if (gu32_Process == T3PROCESS || gu32_Process == T4PROCESS)    //定值
+            {
+                if (gs_Setup.TareMode == BINNO && (gb_FlapWaitFlg || gb_FlapStartFlg))  //无斗 拍袋
+                    fu8p_Array[2] |= 0xC0;
+                else
+                    fu8p_Array[2] |= 0xA0;
+            }
+            else if (gu32_Process == FALLPROCESS || gu32_Process == T5PROCESS)
+            {
+                if (gs_Setup.TareMode == BINYES || gs_Setup.TareMode == BIN2_A || gs_Setup.TareMode == BIN2_B)    //有斗 卸料
+                    fu8p_Array[2] |= 0xC0;
+            }
+        }
+        /*
+        1Byte In: (数据状态)
+        D7:符号位,1:”-”; 0:”+”
+        D6~D5:2AI数据单位.
+        00:g
+        01:kg
+        10:t
+        11:保留
+        D4~D2:2AI数据的小数点
+        000:无小数点
+        001:一位小数点,0.0
+        010:两位小数点,0.00
+        011三位小数点,0.000
+        100:四位小数点,0.0000
+        其余:保留.
+        D1~D0:当前传送的2AI数据类型
+        00: 当前重量
+        01: 累计重量
+        10: 累计次数
+        11: 保留*/
+        switch (gu8_PbusSendType)
+        {
+            case 1: //总累计重量
+                //符号
+                fu8p_Array[3] |= gu32_SumWtUnit << 5;  //单位
+                fu8p_Array[3] |= gu32_SumWtPoint << 2;  //小数点
+                UL_Value.ul = gu32_SumWt;  //累计重量
+                break;
+            case 2: //总累计次数
+                //符号
+                fu8p_Array[3] |= 3 << 5;  //累计次数没有单位，旧程序等于3时没有单位，但是新程序3代表lb
+                fu8p_Array[3] |= 0 << 2;  //小数点
+                UL_Value.ul = gu32_SumNum;  //累计次数
+                break;
+            case 0:
+            default:    //当前重量
+                fu8p_Array[3] |= (gb_SigWtFlg ? 0x80 : 0x00);   //符号
+                fu8p_Array[3] |= gs_Cal.Unit << 5;  //单位
+                fu8p_Array[3] |= gs_Cal.Point << 2;  //小数点
+                UL_Value.ul = gu32_Wt;  //当前重量
+                break;
+        }
+        fu8p_Array[3] |= (gu8_PbusSendType & 0x03);
+        //2AI : 按要求传输给主站的数据,4字节.高位数据在前,低位数据在后.
+        for (i = 0; i < 4; i++)
+        {
+            fu8p_Array[4+i] = UL_Value.uc[3-i];
+        }
+        Pbus_StartSend(fu8p_Array, SE_IN_LEN_GSD2, (gu8_ReqCom & 0x01 ? SE_B_LEN_GSD2 : SE_A_LEN_GSD2));
+    }
+}
+
+/*********************************************************************
+函数名称: void Pbus_Send(void)
+功    能: 仪表PROFIBUS发送数据处理
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-05-04
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_Send(void)
+{
+    if (SE_REQ_IT == false && SE_S_RTS == false && gb_PbusTxdingFlg == false)
+    {   //SE接口板初始化成功，并且允许接收，串口没有发送和接收 那么才可以处理发送数据
+        if (gb_PbusRxdReadyFlg == false && gb_PbusRxdingFlg == false)
+        {
+            //清收发数组
+            memset(gu8p_RxdArray, 0, PBUS_RXDLEN);
+            memset(gu8p_TxdArray, 0, PBUS_TXDLEN);
+            //构造发送数据的数据
+            Pbus_SendDataDeal(gu8p_TxdArray, gu32_GSDType);
+        }
+        else
+        {
+            if (SYS10MS - gu32_TimeTemp >= SE_COM_INTERVAL)
+            {   //发送后超过SE_COM_INTERVAL时间后没有接收到正常数据则重新发送
+                gb_PbusTxdingFlg = false;
+                gb_PbusRxdReadyFlg = false;
+                gb_PbusRxdingFlg = false;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: u8 Pbus_ReciveCheck(u8 *fu8p_Array, u32 fu32_GSDType, u8 fu8_ReqCom)
+功    能: 
+说    明: 
+入口参数: gu8_RxdArray：接收数组首地址 fu32_GSDType：GSD文件类型 fu8_ReqCom：请求数据命令
+返 回 值: 
+!=0：错误代码
+0x84 长度错误
+0x81 校验和A错
+0x82 校验和B错
+0x85 接收A报文格式错
+0x86 接收B报文格式错
+0x90 接收的是初始化返回的命令,并且正确
+0x91 接收的是初始化返回的命令,IO配置数据错误
+0x92 接收的是初始化返回的命令,IO配置数据个数大于20
+0x93 接收的是初始化返回的命令,站地址大于126
+0x94 接收的是初始化返回的命令,报文字符校验和错
+0x95 接收的是初始化返回的命令,报文字符有偶校验错误
+0x96 接收的是初始化返回的命令,报文字符个数<49
+
+D2~D1：00：接口板接收用户板报文无措
+       01：接口板接收用户板报文字符有偶校验错
+       10：接口板接收用户板报文有校验和错
+       11：不用
+
+ 0：数据正常
+设    计: 丛海旭               时    间: 2014-05-05
+修    改:                      时    间: 
+*********************************************************************/
+u8 Pbus_ReciveCheck(u8 *fu8p_Array, u32 fu32_GSDType, u8 fu8_ReqCom)
+{
+    u8 lu8_ErrCode = 0;
+    u8 lu8_SeLen;
+    
+    if (fu32_GSDType == GSD_1)  //GSD1的处理
+    {
+        
+    }
+    else    //GSD2的处理
+    {
+        if (gu8_PbusRxdCnt == PBUS_RXDLEN)
+        {   //接收的是初始化返回报文
+            lu8_ErrCode = gu8p_RxdArray[1];
+            lu8_ErrCode |= 0x90;
+        }
+        else
+        {   //判断接收的是A或B报文
+            lu8_SeLen = ((fu8_ReqCom & 0x01) ? SE_B_LEN_GSD2 : SE_A_LEN_GSD2);
+            
+            if (gu8_PbusRxdCnt != lu8_SeLen)
+            {   //长度错误
+                lu8_ErrCode = 0x84;
+            }
+            else
+            {
+                if (fu8p_Array[lu8_SeLen-1] == Pbus_Checksum(fu8p_Array, lu8_SeLen - 1))
+                {   //校验和正确
+                    if ((fu8p_Array[0] & 0x80) != ((fu8_ReqCom & 0x01) ? 0x80 : 0))
+                    {   //接收A格式错误，此数据是B报文
+                        lu8_ErrCode = ((fu8_ReqCom & 0x01) ? 0x86 : 0x85);
+                    }
+                    else if ((fu8p_Array[0] & 0x06) != 0)
+                    {   //SE接收用户报文有错误
+                        lu8_ErrCode = fu8p_Array[0];
+                    }
+                    else
+                    {   //无错误，赋值请求数据命令
+                        gu8_ReqCom = ((fu8_ReqCom & 0x01) ? 0x02 : (fu8p_Array[0] & 0x01));
+                    }
+                }
+                else
+                {   //校验和错误
+                    lu8_ErrCode = ((fu8_ReqCom & 0x01) ? 0x82 : 0x81);
+                }
+            }
+        }
+    }
+    return lu8_ErrCode;
+}
+
+/*********************************************************************
+函数名称: void Pbus_ReciveDataDeal(u8 *fu8p_Array, u32 fu32_GSDType)
+功    能: 
+说    明: 
+入口参数: fu8p_Array：接收数组首地址 fu32_GSDTypee：GSD文件类型 fu8_ReqCom：请求数据命令
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-05-06
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_ReciveDataDeal(u8 *fu8p_Array, u32 fu32_GSDType)
+{
+    ULDATA UL_Value;
+    u8 i;
+    u32 lu32_Temp;
+    const u8 cu8_DivTab[] = {1,2,5,10,20,50};
+    
+    UL_Value.ul = 0;
+    
+//    if (SE_LINK)   //PROFIBUS总线已经联通才能接下来处理下面的
+//        return;
+    
+    if (fu32_GSDType == GSD_1)  //GSD1处理
+    {
+        
+    }
+    else    //GSD2处理
+    {
+        if (fu8p_Array[0] & 0x80)  //B报文处理 用户参数
+        {
+            //分度值
+            if (gs_Cal.Div != cu8_DivTab[gu8p_RxdArray[1]])
+            {
+                lu32_Temp = FRAM_ReadDW(FMAddr_CalDiv);
+                //需要调整分度,和追零零点
+                gs_Cal.ADK *= cu8_DivTab[gu8p_RxdArray[1]];    //新分度值=原分度值*new dd/old dd
+                gs_Cal.ADK /= gs_Cal.Div;
+                FRAM_WriteFloat(FMAddr_CalADK, gs_Cal.ADK);
+            
+                //调整追零零点:调整分度值后,如果是0,仍然显示零
+                gu32_FloatZero *= gs_Cal.Div;
+                gu32_FloatZero /= cu8_DivTab[gu8p_RxdArray[1]];
+                //保存新的分度值
+                gs_Cal.Div = cu8_DivTab[gu8p_RxdArray[1]];
+                FRAM_WriteDW(FMAddr_CalDiv, gs_Cal.Div);
+
+                //分度值改小后的最大量程处理
+                if (gs_Cal.Div < lu32_Temp)                        //分度值由大变小时最大量程需要调整
+                {
+                    if (gs_Cal.Cap > (gs_Cal.Div * 100000))
+                    {
+                        gs_Cal.Cap = gs_Cal.Div * 100000;
+                        FRAM_WriteDW(FMAddr_CalCap, gs_Cal.Cap);
+                    }
+                }
+                else if (gs_Cal.Div > gs_Cal.Cap)            //修改分度后量程小于分度，则修改量程为分度值
+                {
+                    gs_Cal.Cap = gs_Cal.Div;
+                    FRAM_WriteDW(FMAddr_CalCap, gs_Cal.Cap);
+                }
+            }
+            //单位
+            if (gs_Cal.Unit != gu8p_RxdArray[2])
+            {
+                gs_Cal.Unit = gu8p_RxdArray[2];
+                FRAM_WriteDW(FMAddr_CalUnit, gs_Cal.Unit);
+                ClrSum();
+            }
+            //小数点
+            if (gs_Cal.Point != gu8p_RxdArray[3])
+            {
+                gs_Cal.Point = gu8p_RxdArray[3];
+                FRAM_WriteDW(FMAddr_CalPoint, gs_Cal.Point);
+                ClrSum();
+            }
+            //最大分度数
+            UL_Value.uc[1] = gu8p_RxdArray[4];
+            UL_Value.uc[0] = gu8p_RxdArray[5];
+            UL_Value.ul *= gs_Cal.Div;  //得到最大量程
+            if (gs_Cal.Cap != UL_Value.ul)
+            {
+                gs_Cal.Cap = UL_Value.ul;
+                FRAM_WriteDW(FMAddr_CalCap, gs_Cal.Cap);
+            }
+            //零点跟踪范围
+            if (gu8p_RxdArray[6] != gs_Setup.TraceZeroRng)
+            {
+                gs_Setup.TraceZeroRng = gu8p_RxdArray[6];
+                FRAM_WriteDW(FMAddr_TraceZeroRng, gs_Setup.TraceZeroRng);
+            }
+            //判稳范围
+            if (gu8p_RxdArray[7] != gs_Setup.JudgeStabRng)
+            {
+                gs_Setup.JudgeStabRng = gu8p_RxdArray[7];
+                FRAM_WriteDW(FMAddr_JudgeStabRng, gs_Setup.JudgeStabRng);
+            }
+            //清零范围
+            if (gu8p_RxdArray[8] != gs_Setup.ClrZeroRng)
+            {
+                gs_Setup.ClrZeroRng = gu8p_RxdArray[8];
+                FRAM_WriteDW(FMAddr_ClrZeroRng, gs_Setup.ClrZeroRng);
+            }
+            //上电自动清零
+            if (gu8p_RxdArray[9] != gs_Setup.PowerOnZeroSwitch)
+            {
+                gs_Setup.PowerOnZeroSwitch = gu8p_RxdArray[9];
+                FRAM_WriteDW(FMAddr_PowerOnZeroSwitch, gs_Setup.PowerOnZeroSwitch);
+            }
+            //自动清零间隔
+            if (gu8p_RxdArray[10] != gs_Setup.AutoClrZeroInterval)
+            {
+                gs_Setup.AutoClrZeroInterval = gu8p_RxdArray[10];
+                FRAM_WriteDW(FMAddr_AutoClrZeroInterval, gs_Setup.AutoClrZeroInterval);
+            }
+            //滤波参数
+            if (gu8p_RxdArray[11] != gs_Setup.AdFilterLevel)
+            {
+                gs_Setup.AdFilterLevel = gu8p_RxdArray[11];
+                FRAM_WriteDW(FMAddr_AdFilterLevel, gs_Setup.AdFilterLevel);
+            }
+            //秤体模式  注意此处的协议说明和仪表内部变量是相反的，仪表0有斗1无斗
+            if ((!gu8p_RxdArray[12]) != gs_Setup.TareMode)
+            {
+                gs_Setup.TareMode = (!gu8p_RxdArray[12]);
+                FRAM_WriteDW(FMAddr_TareMode, gs_Setup.TareMode);
+                TareModeChange(gs_Setup.TareMode);
+            }
+        }
+        else    //A报文处理 主站输出到仪表
+        {/* 16DO：
+            DO15~DO11: 保留.
+            DO9 : 当该位由0置为1时,停止状态下,取反手动放料,则返回否定信息.
+            DO8 : 当该位由0置为1时,停止状态下,清除累计值,否则不响应.
+            DO7 : 当该位由0置为1时,停止状态下,取反手动小投,否则返回否定信息
+            DO6 : 当该位由0置为1时,松袋
+            DO5 : 当该位由0置为1时, 夹袋
+            DO4 : 当该位由0置为1时,停止状态下,跳转到下一配方.
+            DO3 : 当该位由0置为1时,清除报警
+            DO2 : 当该位由0置为1时,停止状态下,清零.
+            DO1 : 当该位由0置为1时,停止.
+            DO0 : 当该位由0置为1时,启动.*/
+            for (i = 0; i < 8; i++)
+            {   //D0~D7的处理
+                if (((gu8p_RxdArray[2] & (0x01 << i)) != 0) && ((gu8_16DoTempLow & (0x01 << i)) == 0))
+                {   //旧缓存状态为0，新接收到的状态为1时才响应相关操作，也就是检测由0到1跳变沿
+                    switch (i)
+                    {
+                        case 0: //启动
+                            RunStopInit(true);
+                            break;
+                        case 1: //急停
+                            Clr_Alarm();
+                            RunStopInit(false);
+                            break;
+                        case 2: //清零
+                            if (gb_RunFlg == false)
+                                gb_ZeroKeyFlg = true;
+                            break;
+                        case 3: //清报警
+                            Clr_Alarm();
+                            break;
+                        case 4: //切换配方
+                            if (gb_RunFlg == false)
+                            {
+                                //选配方输入有效调到下目标值不为0的配方
+                                gu32_RecNum = NextRecNum(gu32_RecNum);
+                                FRAM_WriteDW(FMAddr_RecNum, gu32_RecNum);
+                                Read_RecipeData(gu32_RecNum);
+                            }
+                            break;
+                        case 5: //夹袋
+                            Pack_JD();
+                            break;
+                        case 6: //松袋
+                            Pack_SD();
+                            break;
+                        case 7: //手动小投
+                            if (gb_RunFlg == false)
+                            {
+                                gb_Sp1Flg = false;
+                                gb_Sp2Flg = false;
+                                gb_Sp3Flg = !gb_Sp3Flg;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                //D8~D9的处理
+                if (((gu8p_RxdArray[1] & (0x01 << i)) != 0) && ((gu8_16DoTempHi & (0x01 << i)) == 0))
+                {   //旧缓存状态为0，新接收到的状态为1时才响应相关操作，也就是检测由0到1跳变沿
+                    switch (i)
+                    {
+                        case 0: //清累计
+                            if (gb_RunFlg == false)
+                                ClrSum();
+                            break;
+                        case 1: //手动卸料
+                            if (gb_RunFlg == false)
+                            {
+                                if (gs_Setup.DiscSumSwitch != 0) //手动卸料累计开关打开
+                                {
+                                    if (gb_DiscFlg == true)   //此时正在卸料则置准备关闭卸料标志位
+                                    {
+                                        gb_DiscSumOffFlg = true;
+                                        gb_DiscSumOnFlg = false;
+                                    }
+                                    else
+                                    {
+                                        gb_DiscSumOnFlg = true;
+                                        gb_DiscSumOffFlg = false;
+                                    }
+                                }
+                                else
+                                {
+                                    gb_DiscFlg = !gb_DiscFlg;
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            gu8_16DoTempHi = gu8p_RxdArray[1];
+            gu8_16DoTempLow = gu8p_RxdArray[2];  //保存16DO本次的状态
+            /*
+            1Byte Out:
+            D7~D2:2AO写入数据类型
+            00000:(0)   保留,不会将2AO中数据写入仪表
+            00001:(1)   目标(重量控制参数均应小于最大量程).
+            00010:(2)   大投提前量.
+            00011:(3)   中投提前量.
+            00100:(4)   落差值.
+            00101:(5)   零区值.
+            00110:(6)   t7 
+            00111:(7)   超欠差开关(写入奇数打开,偶数关闭,以下开关类型均类似)
+            01000:(8)   超欠差暂停开关
+            01001:(9)   超差值.
+            01010:(10)  欠差值.
+            01011:(11)  t1(时间参数均应在00~99)
+            01100:(12)  t2
+            01101:(13)  t3
+            01110:(14)  t4
+            01111:(15)  t5
+            10000:(16)  t6
+            10001:(17)  自动落差修正开关
+            10010:(18)  落差修正次数(00~99)
+            10011:(19)  落差修正范围(00~99)
+            10100:(20)  落差修正幅度(1~3)
+            010101:(21) 拍袋开关
+            010110:(22) 拍袋延时
+            010111:(23) 拍袋持续时间
+            011000:(24) 拍袋次数
+            011001:(25) 拍袋有效电平时间
+            011010:(26) 拍袋无效电平时间
+            011011:(27) 第一次拍袋有效电平时间
+            011100:(28) 第一次拍袋无效电平时间
+            011101:(29) 点动小投
+            011110:(30) 点动小投有效电平时间
+            011111:(31) 点动小投无效电平时间
+            100000:(32) 连续放料次数
+            其 余:     保留,不会将2AO中数据写入仪表
+            
+            D1~D0:要求2AI传送的数据类型
+             00: (0) 当前重量.
+             01: (1) 累计重量
+             10: (2) 累计次数
+             11: (3) 保留*/
+            gu8_PbusSendType = (gu8p_RxdArray[3] & 0x03);
+            gu8_PbusWriteType = (gu8p_RxdArray[3] >> 2);
+            //2AO: 需要写入的数据, 4字节.高位数据在前,低位数据在后.
+            for (i = 0; i < 4; i++)
+            {   //获取2AO的值
+                UL_Value.uc[3-i] = gu8p_RxdArray[4+i];
+            }
+            switch (gu8_PbusWriteType)
+            {   //根据写入类型变量修改对应的参数值
+                case 0:
+                    break;
+                case 1:        //目标值
+                    if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.Target)
+                        {
+                            if (gb_RunFlg == false)     //停止状态下立即修改配方
+                            {
+                                gs_Rec.Target = UL_Value.ul;   
+                                FRAM_WriteDW(FMAddr_Target(gu32_RecNum), gs_Rec.Target);
+                            }
+                            else        //运行时修改
+                            {
+                                gu32_FastSetTemp[0] = UL_Value.ul;
+                                gu8_FastSetSigTemp |= 0x01;
+                            }
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 2:        //大投提前量
+                    if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.Large)
+                        {
+                            if (gb_RunFlg == false)
+                            {
+                                gs_Rec.Large = UL_Value.ul;
+                                FRAM_WriteDW(FMAddr_Large(gu32_RecNum), gs_Rec.Large);
+                            }
+                            else        //运行时修改
+                            {
+                                gu32_FastSetTemp[1] = UL_Value.ul;
+                                gu8_FastSetSigTemp |= 0x02;
+                            }
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 3:        //中投提前量
+                    if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.Middle)
+                        {
+                            if (gb_RunFlg == false)
+                            {
+                                gs_Rec.Middle = UL_Value.ul;
+                                FRAM_WriteDW(FMAddr_Middle(gu32_RecNum), gs_Rec.Middle);
+                            }
+                            else        //运行时修改
+                            {
+                                gu32_FastSetTemp[2] = UL_Value.ul;
+                                gu8_FastSetSigTemp |= 0x04;
+                            }
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 4:        //落差值
+                    if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.Small)
+                        {
+                            if (gb_RunFlg == false)
+                            {
+                                gs_Rec.Small = UL_Value.ul;
+                                FRAM_WriteDW(FMAddr_Small(gu32_RecNum), gs_Rec.Small);
+                            }
+                            else        //运行时修改
+                            {
+                                gu32_FastSetTemp[3] = UL_Value.ul;
+                                gu8_FastSetSigTemp |= 0x08;
+                            }
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 5:        //近零值
+                    if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.NearZero)
+                        {
+                            gs_Rec.NearZero = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_NearZero(gu32_RecNum), gs_Rec.NearZero);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 6: //t7
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT7)
+                        {
+                            gs_Rec.TimeT7 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT7(gu32_RecNum), gs_Rec.TimeT7);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 7:        //超欠差报警开关
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 1)
+                    {
+                        if (UL_Value.ul != gs_Rec.OUSwitch)
+                        {
+                            gs_Rec.OUSwitch = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_OUSwitch(gu32_RecNum), gs_Rec.OUSwitch);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 8:        //超欠差暂停开关
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 1)
+                    {
+                        if (UL_Value.ul != gs_Rec.OUStopSwitch)
+                        {
+                            gs_Rec.OUStopSwitch = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_OUStopSwitch(gu32_RecNum), gs_Rec.OUStopSwitch);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 9:        //超量值
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.OverValue)
+                        {
+                            gs_Rec.OverValue = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_OverValue(gu32_RecNum), gs_Rec.OverValue);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 10:        //欠量值
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul  <= gs_Cal.Cap)
+                    {
+                        if (UL_Value.ul != gs_Rec.UnderValue)
+                        {
+                            gs_Rec.UnderValue = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_UnderValue(gu32_RecNum), gs_Rec.UnderValue);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 11:        //T1
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT1)
+                        {
+                            gs_Rec.TimeT1 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT1(gu32_RecNum), gs_Rec.TimeT1);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 12:        //T2b
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT2b)
+                        {
+                            gs_Rec.TimeT2b = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT2b(gu32_RecNum), gs_Rec.TimeT2b);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 13:        //T3
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT3)
+                        {
+                            gs_Rec.TimeT3 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT3(gu32_RecNum), gs_Rec.TimeT3);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 14:        //T4
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT4)
+                        {
+                            gs_Rec.TimeT4 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT4(gu32_RecNum), gs_Rec.TimeT4);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 15:        //T5
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT5)
+                        {
+                            gs_Rec.TimeT5 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT5(gu32_RecNum), gs_Rec.TimeT5);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 16:        //T6
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.TimeT6)
+                        {
+                            gs_Rec.TimeT6 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_TimeT6(gu32_RecNum), gs_Rec.TimeT6);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 17:        //落差修正开关
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 1)
+                    {
+                        if (UL_Value.ul != gs_Rec.CorrectFallSwitch)
+                        {
+                            gs_Rec.CorrectFallSwitch = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_CorrectFallSwitch(gu32_RecNum), gs_Rec.CorrectFallSwitch);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 18:        //落差修正次数
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 99)
+                    {
+                        if (UL_Value.ul != gs_Rec.CorrectFallTime)
+                        {
+                            gs_Rec.CorrectFallTime = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_CorrectFallTime(gu32_RecNum), gs_Rec.CorrectFallTime);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 19:        //落差修正范围
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 99)
+                    {
+                        if (UL_Value.ul != gs_Rec.CorrectFallRng1)
+                        {
+                            gs_Rec.CorrectFallRng1 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_CorrectFallRng1(gu32_RecNum), gs_Rec.CorrectFallRng1);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 20:        //落差修正幅度
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if ((UL_Value.ul >= 1) && (UL_Value.ul <= 3))
+                    {
+                        if (UL_Value.ul != gs_Rec.CorrectFallRng2)
+                        {
+                            gs_Rec.CorrectFallRng2 = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_CorrectFallRng2(gu32_RecNum), gs_Rec.CorrectFallRng2);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 21:        //拍袋开关
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 3)
+                    {
+                        if (UL_Value.ul != gs_Rec.FlapBagSwitch)
+                        {
+                            gs_Rec.FlapBagSwitch = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_FlapBagSwitch(gu32_RecNum), gs_Rec.FlapBagSwitch);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 22:        //拍袋延时
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.FlapBagDelay)
+                        {
+                            gs_Rec.FlapBagDelay = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_FlapBagDelay(gu32_RecNum), gs_Rec.FlapBagDelay);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 24:        //定值后拍袋次数
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 99)
+                    {
+                        if (UL_Value.ul != gs_Rec.FlapBagNum)
+                        {
+                            gs_Rec.FlapBagNum = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_FlapBagNum(gu32_RecNum), gs_Rec.FlapBagNum);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 25:        //拍袋有效电平时间
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.FlapBagTimeHi)
+                        {
+                            gs_Rec.FlapBagTimeHi = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_FlapBagTimeHi(gu32_RecNum), gs_Rec.FlapBagTimeHi);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 26:        //拍袋无效电平时间
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.FlapBagTimeLow)
+                        {
+                            gs_Rec.FlapBagTimeLow = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_FlapBagTimeLow(gu32_RecNum), gs_Rec.FlapBagTimeLow);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 29:        //小投点动开关
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 1)
+                    {
+                        if (UL_Value.ul != gs_Rec.SmallPluseSwitch)
+                        {
+                            gs_Rec.SmallPluseSwitch = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_SmallPluseSwitch(gu32_RecNum), gs_Rec.SmallPluseSwitch);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 30:        //小投点动有效时间
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.SmallPluseHi)
+                        {
+                            gs_Rec.SmallPluseHi = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_SmallPluseHi(gu32_RecNum), gs_Rec.SmallPluseHi);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                case 31:        //小投点动无效时间
+                    if (gb_RunFlg == false)
+                        gu8_WriteErrID = 1;
+                    else if (UL_Value.ul <= 999)
+                    {
+                        if (UL_Value.ul != gs_Rec.SmallPluseLow)
+                        {
+                            gs_Rec.SmallPluseLow = UL_Value.ul;
+                            FRAM_WriteDW(FMAddr_SmallPluseLow(gu32_RecNum), gs_Rec.SmallPluseLow);
+                        }
+                    }
+                    else
+                        gu8_WriteErrID = 2;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: void Pbus_Recive(void)
+功    能: 仪表PROFIBUS接收数据的处理 
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-5-5
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_Recive(void)
+{
+    u8 lu8_ErrCode;
+    
+    if (SE_REQ_IT == false && SE_S_RTS == false && gb_PbusTxdingFlg == false && gb_PbusRxdReadyFlg == true)
+    {   //DP总线已经连接上，SE接口板初始化成功，并且允许接收，串口没有发送并且已经接收状态 那么才可以处理接收数据
+        gb_PbusRxdReadyFlg = false;
+        lu8_ErrCode = Pbus_ReciveCheck(gu8p_RxdArray, gu32_GSDType, gu8_ReqCom);
+        if (0 == lu8_ErrCode)
+        {   //数据无错误，处理接收到的数据
+            Pbus_ReciveDataDeal(gu8p_RxdArray, gu32_GSDType);
+        }
+    }
+}
+
+/*********************************************************************
+函数名称: u8 Pbus_Checksum(u8 *fu8p_Array, u8 fu8_i)
+功    能: 返回校验和数据
+说    明: 
+入口参数: fu8p_Array：校验数据首地址    fu8_i：参与校验的个数
+返 回 值: 校验和结果
+设    计: 丛海旭               时    间: 2014-04-24
+修    改:                      时    间: 
+*********************************************************************/
+u8 Pbus_Checksum(u8 *fu8p_Array, u8 fu8_i)
+{
+    u8 i, j;
+    
+    for (i = 0, j = 0; i < fu8_i; i++)
+        j += fu8p_Array[i];
+    return j;
+}
+
+/*********************************************************************
+函数名称: void Pbus_StartSend(u8 *fu8_Array, u8 fu8_TxdLen, u8 fu8_RxdLen)
+功    能: 启动串口发送数据
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-04-24
+修    改:                      时    间: 
+*********************************************************************/
+void Pbus_StartSend(u8 *fu8_Array, u8 fu8_TxdLen, u8 fu8_RxdLen)
+{
+    gu8_PbusTxdLen = fu8_TxdLen;    //发送数据个数
+    gu8_PbusRxdLen = fu8_RxdLen;    //接收数据个数
+    gu8_PbusTxdCnt = 0; //发送计数
+    gu8_PbusRxdCnt = 0;
+    fu8_Array[fu8_TxdLen-1] = Pbus_Checksum(fu8_Array, fu8_TxdLen - 1);   //校验和
+    gb_PbusTxdingFlg = true;    //开始发送
+    gu32_TimeTemp = SYS10MS;    //保存发送时刻
+    UART_FifoReset(PBUS_UARTX, UART_TxFIFO);         //清空发送队列
+    UART_ItConfig(PBUS_UARTX,UART_TxEmpty,ENABLE);   //允许串口发送中断
+//    UART_ItConfig(PBUS_UARTX,UART_RxBufNotEmpty,DISABLE);//关闭接收中断
+}
+
+/*********************************************************************
+函数名称: void Com_Pbus_DP(void)
+功    能: PROFIBUS通讯主循环处理
+说    明: 放在主循环中每次循环都执行
+入口参数: 
+返 回 值: 
+设    计: 丛海旭               时    间: 2014-04-29
+修    改:                      时    间: 
+*********************************************************************/
+void Com_Pbus_DP(void)
+{
+    Pbus_Init();    //初始化
+    Pbus_Recive();  //接收数据处理
+    Pbus_Send();    //发送数据处理
+}
+
+
+

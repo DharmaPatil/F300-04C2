@@ -1,0 +1,233 @@
+#include "include.h"
+/*
+Ver001：
+
+*/
+
+//版本号
+#define VERSION     "001"
+#define MODEL       "8804C2"
+
+/*********************************************************************
+函数名称: void Disp_VersionType(u8 fu8_Type)
+功    能: 显示版本号或程序修改时间或随机ID号
+说    明: 
+入口参数: 0版本号 1程序修改时间 2随机ID号
+返 回 值: 
+设    计: chx                  时    间: 
+修    改:                      时    间: 
+*********************************************************************/
+/*显示当前编译时间日期 
+unsigned char code DataStr[]=__DATE__; 
+unsigned char code TimeStr[]=__TIME__; 
+格式 
+DataStr[]=[][][]空格[][]空格[][][][]; 
+          月的英文  日	 年 
+如2004/10/06显示为43 63 74 20 30 36 20 32 30 30 34 即oct 06 2004 
+1= Jan 2= Feb 3= Mar 4=Apr 5=May 6 =Jun 7=Jul 8=Aug 9=Sep 10=Oct 11=Nov 12=Dec  
+
+TimeStr[]=[][]:[][]:[][]; 时:分:秒 
+如10:31:26显示为31 30 3a 33 31 3a 32 36*/
+void Disp_VersionType(u8 fu8_Type)
+{
+//    u8 lu8_Data[] = __DATE__;
+//    u8 lu8_Time[] = __TIME__;
+//    u8 lu8_Month;
+    
+    VFD_ClrDispRamArry(0, 1);       //清显示缓存
+    switch(fu8_Type)
+    {
+        case 0:     //型号版本号
+//            if (gu32_ModelSetSwitch)    //型号自定义功能打开
+//            {
+//                g_UCurrDisp.SA[0] = Value_To_SEG[gu32_ModelArry[1]];
+//                g_UCurrDisp.SA[1] = Value_To_SEG[gu32_ModelArry[2]];
+//                g_UCurrDisp.SA[2] = Value_To_SEG[gu32_ModelArry[3]];
+//                g_UCurrDisp.SA[3] = Value_To_SEG[gu32_ModelArry[4]];
+//                g_UCurrDisp.SA[4] = Value_To_SEG[gu32_ModelArry[5]];
+//                g_UCurrDisp.SA[5] = Value_To_SEG[gu32_ModelArry[6]];
+//            }
+//            else
+//            {
+                VFD_MainDisp_Str(MODEL);    //型号
+                VFD_AuxDisp_Str(VERSION);   //版本号
+//            }
+            break;
+        case 1:     //程序日期
+//            lu8_Month = monthfromname(lu8_Data);
+//            
+//            g_UCurrDisp.SA[0] = Value_To_SEG[lu8_Data[9] & 0x0F];
+//            g_UCurrDisp.SA[1] = Value_To_SEG[lu8_Data[10] & 0x0F] | 0x80;
+//            g_UCurrDisp.SA[2] = Value_To_SEG[lu8_Month/10];
+//            g_UCurrDisp.SA[3] = Value_To_SEG[lu8_Month%10] | 0x80;
+//            g_UCurrDisp.SA[4] = Value_To_SEG[lu8_Data[4] & 0x0F];
+//            g_UCurrDisp.SA[5] = Value_To_SEG[lu8_Data[5] & 0x0F];
+//            
+//            g_UCurrDisp.SB[0] = SEG_BLK;
+//            g_UCurrDisp.SB[1] = SEG_t;
+//            g_UCurrDisp.SB[2] = Value_To_SEG[lu8_Time[0] & 0x0F];
+//            g_UCurrDisp.SB[3] = Value_To_SEG[lu8_Time[1] & 0x0F] | 0x80;
+//            g_UCurrDisp.SB[4] = Value_To_SEG[lu8_Time[3] & 0x0F];
+//            g_UCurrDisp.SB[5] = Value_To_SEG[lu8_Time[4] & 0x0F];
+//            break;
+//        case 2:
+//            g_UCurrDisp.SA[0] = SEG_i;
+//            g_UCurrDisp.SA[1] = SEG_d;
+//            if (gu32_GetedRandom != 0x55 || gu32_RandomID == 0 || gu32_RandomID >= 1000000)
+//            {
+//                do
+//				{
+//					gu32_RandomID = GetRandom();
+//				}while(GradeShutCodeEQ());
+//				
+//				gu32_GetedRandom = 0x55;
+//				FM_WriteDW(FMAddr_GetedRandom, gu32_GetedRandom);
+//				FM_WriteDW(FMAddr_RandomID, gu32_RandomID);
+//				UpdataGrandShutCode();		//更新密码
+//            }
+//            
+//            g_UCurrDisp.SB[0] = Value_To_SEG[gu32_RandomID/100000];
+//            g_UCurrDisp.SB[1] = Value_To_SEG[gu32_RandomID%100000/10000];
+//            g_UCurrDisp.SB[2] = Value_To_SEG[gu32_RandomID%10000/1000];
+//            g_UCurrDisp.SB[3] = Value_To_SEG[gu32_RandomID%1000/100];
+//            g_UCurrDisp.SB[4] = Value_To_SEG[gu32_RandomID%100/10];
+//            g_UCurrDisp.SB[5] = Value_To_SEG[gu32_RandomID%10];
+//            break;
+        default:
+            break;
+    }
+    
+    VFD_CopyDispArryToDispRam();
+    VFD_WriteDispRamArry();
+}
+
+/*********************************************************************
+函数名称: void Disp_Version(void)
+功    能: 显示型号和版本号
+说    明: 包括查看程序日期和程序
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-11
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_Version(void)
+{
+    u32 lu32_TimeBuf;
+    u8  lu8_DispType = 0;
+    
+    Disp_VersionType(lu8_DispType);
+    lu32_TimeBuf = gu32_Sys10ms;
+    //显示版本号时按4号键切换程序时间和随机ID号显示
+    while(gu32_Sys10ms - lu32_TimeBuf < 200)
+    {
+//        OPBuzer();
+//        VFD_KeyDeal();
+//        if (gu16_KeyCode == K_SET)
+//        {
+//            gu32_SysWorkState = MODELSETSTATE;
+//            ModelSet();      //型号设置
+//            gb_FlashFlg = false;
+//            Disp_VersionType(lu8_DispType);
+//            lu32_TimeBuf = gu32_Sys10ms;
+//        }
+//        else if (gu16_KeyCode == K_4)
+//        {
+//            if ((++lu8_DispType) >= 3)
+//                lu8_DispType = 0;
+//            Disp_VersionType(lu8_DispType);
+//            lu32_TimeBuf = gu32_Sys10ms;
+//        }
+//        else if (gu16_KeyCode != K_NONE)         //按其他按键返回到版本号显示
+//        {
+//            
+//            if (lu8_DispType != 0)
+//			{
+//			   lu8_DispType = 0;
+//			   Disp_VersionType(lu8_DispType);
+//			   lu32_TimeBuf = gu32_Sys10ms;
+//			}
+//        }
+//        //未加入AD转换和AD初始化不成功的处理
+//        if (lu8_DispType != 0)
+//            lu32_TimeBuf = gu32_Sys10ms;
+    }
+    
+//    if (gu32_PowerOnZeroSwitch == 1)     //上电自动清零开关打开，置上电清零标志位
+//    {
+//        gb_PowerOnZeroFlg_A = true;
+//        gb_PowerOnZeroFlg_B = true;
+//    }
+}
+
+/*********************************************************************
+函数名称: void Disp_MainFun(void)
+功    能: 主循环显示处理
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2013-12-11
+修    改:                      时    间: 
+*********************************************************************/
+void Disp_MainFun(void)
+{
+    VFD_ClrDispArry();              //清显示缓存
+    Clr_MainDisp();                 //清主显示数组
+    switch(gu32_SysWorkState)
+    {
+        case RUNSTATE:
+            SetStopRunBuffer();         //运行状态下的显示处理
+            break;
+        case STOPSTATE:
+            SetStopRunBuffer();         //停止状态下的显示处理
+            break;
+        case RECIPESTATE:
+            SetRecipeBuffer();          //配方设置状态下的显示处理
+            break;
+        case SETUPSTATE:
+            SetSetupBuffer();           //工作参数设置状态下的显示处理
+            break;
+        case IOTESTSTATE:
+            SetIoTestBuffer();          //开关量测试状态下的显示处理
+            break;
+        case IODEFINESTATE:
+            SetIoDefBuffer();           //开关量自定义状态下的显示处理
+            break;
+        case CALIBSTATE:
+            SetCalibBuffer();           //标定状态下的显示处理
+            break;
+        case TIMESTATE:
+            SetTimeBuffer();            //时间设置状态下的显示处理
+            break;
+        case SHUTDOWNSETSTATE:
+            SetShutDownBuffer();            //关机状态下的显示处理
+            break;
+        case BATCHSTATE:
+            SetBatchStateBuffer();           //批次设置状态下的显示处理
+            break;
+        case SUMSTATE:
+            SetSumStateBuffer();            //累计查看显示处理
+            break;
+        case SIMULATIONSTATE:
+            SetSimulationStateBuffer();
+            break;
+        default:
+            break;
+    }
+    
+    if (gb_DispErrorFlg)        //显示error时不填充设置相关显示缓存
+    {
+//        VFD_ClrDispArry();              //清显示缓存
+//        Clr_MainDisp();                 //清主显示数组
+        Disp_Error();           //error报警显示处理
+        VFD_WriteUpMainDispArry(g_UCurrDisp.ALL);         //将显示数组存入显示缓存
+    }
+    
+    VFD_Write();                    //写显示缓存
+}
+
+
+
+
+
+
+

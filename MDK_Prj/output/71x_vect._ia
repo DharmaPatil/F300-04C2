@@ -1,0 +1,5 @@
+--cpu ARM7TDMI -g
+-I "D:\Keil 5\ARM\RV31\INC"
+-I "D:\Keil 5\ARM\CMSIS\Include"
+-I "D:\Keil 5\ARM\Inc\ST\71x"
+--list .\71x_vect.lst --xref -o .\output\71x_vect.o --depend .\output\71x_vect.d "..\str71x\71x_vect.s"

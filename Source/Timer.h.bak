@@ -1,0 +1,9 @@
+#ifndef _TIMER_H
+#define _TIMER_H
+
+#include "71x_type.h"
+
+extern volatile u32 gu32_Sys10ms;
+extern void Timer0_Init(void);
+
+#endif

@@ -1,0 +1,75 @@
+#ifndef _RUNSTATE_H
+#define _RUNSTATE_H
+
+#define     T1PROCESS               1        /*过程控制的T1延时阶段*/
+#define     SUPERLARGEPROCESS       2        /*过程控制的超大投阶段*/
+#define     LARGEPROCESS            3        /*过程控制的大投阶段*/
+#define     MIDDLEPROCESS           4        /*过程控制的中投阶段*/
+#define     SMALLPROCESS            5        /*过程控制的小投阶段*/
+#define     T3PROCESS               6        /*过程控制的T3延时阶段*/
+#define     T4PROCESS               7        /*过程控制的T4延时阶段*/
+#define     FALLPROCESS             8        /*过程控制的卸料阶段*/
+#define     T5PROCESS               9        /*过程控制的T5延时阶段*/
+
+//夹袋到位标志
+#define     PACKOK  ((!gb_EnPackOKFlg) || gb_PackOKFlg)
+//夹袋已经完成标志
+#define     PACKEND  (gb_SDDelayFlg && gb_PackFlg && (!gb_JSDDelayFlg) && PACKOK)
+
+
+
+extern u32 gu32_Process;                 //运行时的加料状态
+extern bool gb_TimeRunFlg;              //延时已经启动标志位
+extern u32 gu32_TimeBuf;                //延时计时器缓存，保存设置的时间值
+extern u32 gu32_Time1_5;                //T1~T5的计时器缓存，保存启动时刻的时间
+extern bool  gb_FlapBagOutFlg;             //拍袋输出有效标志
+extern bool  gb_FlapWaitFlg;               //拍袋之前的等待标志
+extern bool  gb_FlapStartFlg;              //拍袋已经开始标志
+extern bool  gb_FlapAllHighFlg;            //低电平时间为0,拍袋恒定有效标志位
+extern u32 gu32_TimeFlapBuf;               //拍袋用时间寄存器
+extern u32 gu32_Time8_9;                   //t8和t10用延时寄存器
+extern u32 gu32_FlapBagNumCnt;             //拍袋计数器
+extern bool gb_TareGetedFlg;            //皮重已经获取标志位
+extern u32 gu32_OUDelayTimeBuf;         //超欠差暂停关闭时的超欠差报警计时寄存器
+extern bool gb_AddFlapBagFlg;                //加料中拍袋标志位
+extern bool gb_ExtFlapBagFlg;                //额外拍袋输出标志位
+extern u32 gu32_DiscShakeCnt;           //卸料震打计数
+extern bool gb_Error9Flg;                    //卸料未干净报警
+extern bool gb_SumFlg;                 //累计
+extern bool gb_DiscWtGetedFlg;       //定值重量已经获取
+extern u32 gu32_DiscValue;     //本次卸料值
+extern u32 gu32_HoldWt;        //定值保持重量
+extern u32 gu32_WeighTimeCnt;      //称量次数
+extern u32 gu32_TargetTemp;        //目标值的缓存
+extern bool gb_LiftBagStartFlg;    //启动提袋
+extern bool gb_PushBagStartFlg;    //启动推袋
+extern u32 gu32_SumTemp;           //累计的缓存值
+typedef struct
+{
+    u32 u32Sp1Time;     //快加时间
+    u32 u32Sp1TimeTemp;     //快加时间缓存
+    u32 u32Sp2Time;     //中加时间
+    u32 u32Sp2TimeTemp;     //中加时间缓存
+    u32 u32Sp3Time;     //慢加时间
+    u32 u32Sp3TimeTemp;     //慢加时间缓存
+    u32 u32RunCmpTime;  //启动到定值结束时间
+    u32 u32OneTareTime; //一次加料过程时间
+    u32 u32RunStartTimeTemp;     //启动时刻缓存
+}DEBUG_RUN_TIME;
+
+extern DEBUG_RUN_TIME gs_DebugRunTime;
+#ifdef DEBUG_WT_SEND
+extern DEBUG_RUN_TIME gs_DebugRunTimeTemp; //打印的时候使用作为gs_DebugRunTime的缓存
+u32 gu32_DebugTarget;
+u32 gu32_DebugLarge;
+u32 gu32_DebugMiddle;
+u32 gu32_DebugSmall;
+#endif
+
+extern void Key_RunState(void);
+extern void FlapBag(void);
+extern void UpdateFastSetRec(void);
+extern bool StabOver(bool lb_Reset);
+
+#endif
+

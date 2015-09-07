@@ -1,0 +1,63 @@
+/*
+Description:            PROFIBUS-DP总线相关功能
+Author:                 丛海旭
+Date:                   2014-4-4
+IC:                     PB-OEM2-SE
+
+UART1连接DP板串口 波特率38400 8位数据 偶校验 1位停止位
+REQ_IT - P1.12      0：SE初始化完毕         1：SE初始化等待
+S_RTS - P1.11       0：SE等待（允许）接收   1：SE拒绝接收
+DP_LINK - P2.9      0：SE已经成功连接DP总线 1：SE未成功连接DP总线
+*/
+#include "71x_lib.h"
+
+#define PBUS_BAUDRATE   38400
+
+
+
+
+#define PBUS_REQ_IT     GPIO_BitRead(GPIO1,12)
+#define PBUS_S_RTS      GPIO_BitRead(GPIO1,11)
+#define PBUS_LINK       GPIO_BitRead(GPIO2,9)
+
+
+
+/*********************************************************************
+函数名称: bool PBUS_CheckExt(void)
+功    能: 检查是否连接DP扩展板
+说    明: 
+入口参数: 
+返 回 值: true：已连接DP扩展板  false：未连接DP扩展板
+设    计: chx                  时    间: 2014-4-4
+修    改:                      时    间: 
+*********************************************************************/
+bool PBUS_CheckExt(void)
+{
+    //定义PBUS_REQ_IT、PBUS_S_RTS、PBUS_LINK为TTL电平输入
+    GPIO_Config(GPIO1, (1<<12), GPIO_IN_TRI_TTL);
+    GPIO_Config(GPIO1, (1<<11), GPIO_IN_TRI_TTL);
+    GPIO_Config(GPIO1, (1<<9), GPIO_IN_TRI_TTL);
+    
+    //DP扩展板初始化引脚和等待接收引脚都有信号则认为连接了DP扩展板
+    if (PBUS_REQ_IT == true && PBUS_S_RTS == true)
+        return true;
+    else
+        return false;
+}
+
+/*********************************************************************
+函数名称: void UartPBUSInit_UART1()
+功    能: 
+说    明: 
+入口参数: 
+返 回 值: 
+设    计: chx                  时    间: 2014-04-16
+修    改:                      时    间: 
+*********************************************************************/
+
+UartGMInit_UART1
+
+
+
+
+

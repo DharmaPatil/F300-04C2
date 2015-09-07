@@ -1,0 +1,8 @@
+#ifndef _PROFIBUS_DP_H
+#define _PROFIBUS_DP_H
+
+
+bool PBUS_CheckExt(void)
+
+
+#endif

@@ -1,0 +1,6 @@
+目标文件:F:\WORK\GM8804C-2_ARM\150122 04c2_ARM 升级版 增加DP通讯 测试功能增加 修正标定 细节调整 提高ADK精度 PROFIBUS 双无斗\MDK_Prj\bin\GM8804C-2_ARM已经合并BootLoader.bin   大小:0x00025C44
+各部分大小如下:
+
+索引                        文件名                                            大小              偏移量            强制插入
+ 1      F:\WORK\GM8804C-2_ARM\150122 04c2_ARM 升级版 增加DP通讯 测试功能增加 修正标定 细节调整 提高ADK精度 PROFIBUS 双无斗\MDK_Prj\bin\GM8804C-2_BootLoarder.bin        0x00003A14        0x00000000             否
+ 2      F:\WORK\GM8804C-2_ARM\150122 04c2_ARM 升级版 增加DP通讯 测试功能增加 修正标定 细节调整 提高ADK精度 PROFIBUS 双无斗\MDK_Prj\bin\GM8804C-2_ARM未合并BootLoader.bin        0x00021C44        0x00004000             是

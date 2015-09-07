@@ -1,0 +1,33 @@
+/*************************************************
+Project:                GM8804C-2_ARM
+File name:              Timer.c
+Description:            定时器相关函数
+Author:                 丛海旭
+Version:                1.0
+Date:                   2013-12-9
+Others:                 
+History:
+*************************************************/
+#include "include.h"
+
+#define T0OCI_SIPL      7   //定时器中断优先级
+#define T0OCMPT_MS      10  //定时器输出比较时间(mS为单位)
+#define T0_CCR          15  //定时器0 预分频寄存器值
+//定时器0 输出比较A寄存器 初始值
+#define T0_OCAR         (u16)((T0OCMPT_MS)*RCCU_FrequencyValue(RCCU_PCLK1)/(TIM_PrescalerValue(TIM0)+1)/1000)
+
+Vu32 gu32_Sys10ms;               //系统计时器，一定要定义为volatile类型，防止编译器优化时出错
+
+void Timer0_Init(void)
+{
+    gu32_Sys10ms=0;
+
+    TIM_Init(TIM0);     //初始化定时器T0
+    TIM_ClockSourceConfig(TIM0,TIM_INTERNAL);   //设置定时器时钟源为内部时钟
+    TIM_PrescalerConfig(TIM0,T0_CCR);   //配置分频因子值
+    TIM_OCMPModeConfig(TIM0, TIM_CHANNEL_A,T0_OCAR, TIM_TIMING, TIM_LOW);
+    TIM_ITConfig(TIM0,TIM_OCA_IT,ENABLE);   //输出比较模式
+    EIC_IRQChannelPriorityConfig(T0OC1_IRQChannel , T0OCI_SIPL);    //
+    EIC_IRQChannelConfig(T0OC1_IRQChannel,ENABLE);  //使能T0中断
+    TIM_CounterConfig(TIM0,TIM_START);  //开始计时
+}

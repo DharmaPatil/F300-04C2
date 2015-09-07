@@ -1,0 +1,6 @@
+-c --cpu ARM7TDMI -g -O3 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source
+-I d:\Keil_v5\ARM\RV31\INC
+-I d:\Keil_v5\ARM\CMSIS\Include
+-I d:\Keil_v5\ARM\Inc\ST\71x
+-D__UVISION_VERSION="513"
+-o .\output\timeanddate.o --omf_browse .\output\timeanddate.crf --depend .\output\timeanddate.d "..\Source\TimeAndDate.c"

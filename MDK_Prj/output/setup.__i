@@ -1,0 +1,5 @@
+-c --cpu ARM7TDMI -g -O0 --apcs=interwork -I..\str71x\inc -I..\str71x -I..\Source
+-I "D:\Keil 5\ARM\RV31\INC"
+-I "D:\Keil 5\ARM\CMSIS\Include"
+-I "D:\Keil 5\ARM\Inc\ST\71x"
+-o .\output\setup.o --omf_browse .\output\setup.crf --depend .\output\setup.d "..\Source\Setup.c"

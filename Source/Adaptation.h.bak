@@ -1,0 +1,80 @@
+#ifndef __Adaptation_H_
+#define __Adaptation_H_
+
+#include "71x_type.h"
+
+#define PRODUCT_PARAM_DELAY_TIME_UNIT    100
+/*******************************************************************************
+块注释: 自适应参数
+*******************************************************************************/
+typedef struct
+{
+    s32  *const ps32Weight;     // 当前重量 根据毛净重包装设置 指向不同的地址， 仅在加料前定位指向
+    s32  *const ps32SP2;        // 指向中投提前量（修正时用）
+    s32  *const ps32SP3;        // 指向落差提前量（修正时用）
+    u32  *const pu32SP3RealTime;        //指向实际测得的小投时间
+    u32  *const pu32SP2RealTime;        //指向实际测得的中投时间
+    u32  *const pu32SP3ForbidTime;      //指向小投禁判时间
+    s32  *const ps32SP3RealWt;          //实际小投停止重量
+    s32  *const ps32SP2RealWt;          //实际中投停止重量
+    s32  *const ps32SP3KThisTime;       //指向本次小投过程的线性拟合K值
+    s32  *const ps32SP2KThisTime;       //本次中投截止点附近的线性拟合K值
+    u32  *const pu32ADCntSP3Rush;       //中投截止点到过冲量采集点的AD次数
+    
+    
+    u32 u32AdatpEn;            // 自适应开关
+    
+    // 大/中投修正用
+    bool bFirstIn;              // 停止后置1，填充buf后清零，用于填充buf
+    s32  s32RushWt;             // 过冲量
+    s32  s32SP2Bkp;             // 中投重量值（备份）
+    u32 u32SP2En;             // 大/中投修正开关
+    u32 u32SP2Range;          // 大/中投修正范围门限 %
+    u32 u32SP2ThresholdMax;      // 大/中投修正阈值判断 小投最长时间 ms
+    u32 u32SP2ThresholdMin;      // 大/中投修正阈值判断 小投最短时间 禁判时间+此时间ms
+    u32 u32SP2ThresholdVal;     //小投最长和最短的门限时间
+    u32 u32SP2Scope;           // 中投修正幅度
+    u32 u32SP2Count;          // 大/中投当前记录次数      本值只在上电或打开落差修正开关时清零
+    u32 u32SP2SubCount;       // 大/中投当前记录次数      本值只在上电或打开落差修正开关时清零
+    s32 s32SP3KProb;            //统计处理得到的小投线性拟合K值
+    s32 s32SP2KProb;            //统计处理得到的中投截止点附近线性拟合K值
+    u32 u32SP2WT;               //中投加的重量
+    float fSP2Flux;             //中投流量 单位是AD次数
+    u32 u32SP2AdaptADNum;       //中投调整AD次数
+    
+    // 落差修正用
+    s32  s32ConfirmWt;          // 定值后的重量，若欠差补料，则记录补料前的重量，若无补料，则值为0
+    s32  s32TargetVal;          // 目标值
+    s32  s32SP3Bkp;             // 落差重量值（备份）
+    u32 u32SP3En;              // 落差修正开关
+    u32 u32SP3Range;           // 落差修正范围门限值 %
+    u32 u32SP3Scope;           // 落差修正幅度
+    u32 u32SP3Count;           // 当前记录次数     本值只在上电或打开落差修正开关时清零
+    
+    
+    //调试输出结果
+    u32 u32RushWtProb;  //统计过冲量
+    s32 s32SP2AdaptVal; //中投调整值
+    s32 s32SP2AdaptSig; //中投提前量调整趋势 +=1  -=-1
+    
+    u32 u32SP3Prob;     //统计落差值
+    s32 s32SP3AdaptVal; //落差调整值
+    
+    
+}struct_adapt_t;
+
+extern struct_adapt_t  gs_Adapt;
+
+
+/*******************************************************************************
+            对外接口
+*******************************************************************************/
+extern void Adapt_InitDataFirstRun(struct_adapt_t *pfs_Adapt);
+extern void Adapt_InitData(struct_adapt_t *pfs_Adapt);
+extern bool SampleRushWt(struct_adapt_t *pfs_Adapt);
+extern u32 Adapt_Process(struct_adapt_t *pfs_Adapt);
+
+
+#endif
+
+/***************************************The End Of This File***************************************/
